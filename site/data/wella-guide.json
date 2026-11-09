@@ -1,0 +1,592 @@
+{
+ "source": "Wella Color Expert workbook 2026 (Sylvie's copy, scanned)",
+ "lines": [
+  {
+   "id": "kp",
+   "name": "Koleston Perfect ME+",
+   "type": "Permanent",
+   "pg": "PDF p.1",
+   "summary": "Permanent colour with up to 100% grey coverage. Ranges: Pure Naturals, Rich Naturals, Vibrant Reds, Deep Browns, Special Blondes, Special Mix.",
+   "mix": [
+    {
+     "for": "Pure Naturals, Rich Naturals, Vibrant Reds, Deep Browns",
+     "ratio": "1:1",
+     "eg": "60g colour + 60g Welloxon Perfect"
+    },
+    {
+     "for": "Special Blonde",
+     "ratio": "1:2",
+     "eg": "60g Special Blonde + 120g Welloxon Perfect"
+    }
+   ],
+   "dev": [
+    {
+     "d": "12% / 40 vol",
+     "use": "3 levels of lift (Special Blonde: 5)"
+    },
+    {
+     "d": "9% / 30 vol",
+     "use": "2 levels of lift (Special Blonde: 4)"
+    },
+    {
+     "d": "6% / 20 vol",
+     "use": "1 level of lift; grey/white coverage on same depth or darker (Special Blonde: 3 levels)"
+    },
+    {
+     "d": "4% / 13 vol",
+     "use": "Same depth or darker on natural hair, deeper result, no grey coverage needed"
+    },
+    {
+     "d": "1.9% Welloxon Perfect Pastel",
+     "use": "Pastel toning"
+    }
+   ],
+   "time": [
+    {
+     "for": "Koleston Perfect ME+",
+     "heat": "15–25 min",
+     "noheat": "30–40 min"
+    },
+    {
+     "for": "Special Blondes",
+     "heat": "25–35 min",
+     "noheat": "50–60 min"
+    }
+   ]
+  },
+  {
+   "id": "cx",
+   "name": "Color Xpress",
+   "type": "Permanent (express)",
+   "pg": "PDF p.2",
+   "summary": "Retouch greys in 10 minutes. 14 shades for express grey root touch-up. Stops processing after 10 minutes.",
+   "mix": [
+    {
+     "for": "All shades",
+     "ratio": "1:1",
+     "eg": "with Welloxon 6%"
+    }
+   ],
+   "dev": [
+    {
+     "d": "6% / 20 vol",
+     "use": "Standard"
+    }
+   ],
+   "time": [
+    {
+     "for": "All shades",
+     "noheat": "10 min"
+    }
+   ]
+  },
+  {
+   "id": "il",
+   "name": "Illumina Color",
+   "type": "Permanent",
+   "pg": "PDF p.4",
+   "summary": "Permanent colour that lightens, darkens and enhances with a sheer, natural result. Up to 3 levels of lift; blends or covers up to 100% grey. Cooler undertones fight brassiness.",
+   "mix": [
+    {
+     "for": "All shades",
+     "ratio": "1:1",
+     "eg": "1 part Illumina + 1 part Welloxon Perfect"
+    }
+   ],
+   "dev": [
+    {
+     "d": "12% / 40 vol",
+     "use": "3 levels of lift"
+    },
+    {
+     "d": "9% / 30 vol",
+     "use": "2 levels of lift"
+    },
+    {
+     "d": "6% / 20 vol",
+     "use": "1 level of lift; grey coverage same depth or darker"
+    },
+    {
+     "d": "1.9% Welloxon Perfect Pastel",
+     "use": "Pastel toning and balancing"
+    }
+   ],
+   "time": [
+    {
+     "for": "All shades",
+     "heat": "15–25 min",
+     "noheat": "30–40 min"
+    }
+   ]
+  },
+  {
+   "id": "ct",
+   "name": "Color Touch",
+   "type": "Demi-permanent",
+   "pg": "PDF p.5",
+   "summary": "Demi-permanent, up to 28 washes. Color Touch up to 50% grey coverage; Color Touch Plus up to 70%. Special Mix adds intensity of tone. Mirrors the Koleston Perfect shades.",
+   "mix": [
+    {
+     "for": "Color Touch and Special Mix",
+     "ratio": "1:2",
+     "eg": "1 part colour + 2 parts Color Touch Emulsion 1.9% or 4%"
+    },
+    {
+     "for": "Color Touch Plus",
+     "ratio": "1:2",
+     "eg": "1 part colour + 2 parts Color Touch Emulsion 4%"
+    }
+   ],
+   "dev": [
+    {
+     "d": "1.9% Color Touch Emulsion",
+     "use": "Same depth or darkening with a soft regrowth; toning blondes; soft grey blending"
+    },
+    {
+     "d": "4% Color Touch Emulsion",
+     "use": "More vibrancy; coarse hair; intense grey blending; up to 70% grey coverage with soft regrowth; low lift"
+    }
+   ],
+   "time": [
+    {
+     "for": "All shades",
+     "heat": "15 min",
+     "noheat": "20 min"
+    }
+   ],
+   "apply": "On pre-shampooed damp or clean dry hair."
+  },
+  {
+   "id": "cf",
+   "name": "Color Fresh",
+   "type": "Semi-permanent",
+   "pg": "PDF p.6",
+   "summary": "Ready to use; ammonia and developer free, acid pH. Lasts up to 10 shampoos; up to 30% grey blend.",
+   "mix": [
+    {
+     "for": "All shades",
+     "ratio": "Ready to use",
+     "eg": "No developer"
+    }
+   ],
+   "dev": [],
+   "time": [
+    {
+     "for": "Color Fresh pH 6.5 and Silver pH 6.5",
+     "noheat": "5–20 min, by condition and intensity wanted"
+    }
+   ],
+   "apply": "Shampoo and towel dry, apply through lengths and ends, comb through; emulsify with warm water and rinse."
+  },
+  {
+   "id": "pf",
+   "name": "Perfecton by Color Fresh",
+   "type": "Temporary (tone only)",
+   "pg": "PDF p.6",
+   "summary": "Leave-in temporary tone; ammonia and developer free. Grey blending up to 15%.",
+   "mix": [
+    {
+     "for": "12/0 to 10/0",
+     "ratio": "250ml warm water + 5ml"
+    },
+    {
+     "for": "9/0",
+     "ratio": "250ml warm water + 10ml"
+    },
+    {
+     "for": "8/0",
+     "ratio": "250ml warm water + 15ml"
+    },
+    {
+     "for": "7/0 to 4/0",
+     "ratio": "250ml warm water + 20ml"
+    }
+   ],
+   "dev": [],
+   "time": [
+    {
+     "for": "All",
+     "noheat": "No development time; do not rinse"
+    }
+   ],
+   "apply": "Shampoo and towel dry, mix in applicator flask, apply evenly. Do not rinse or shampoo again."
+  },
+  {
+   "id": "sh",
+   "name": "Shinefinity",
+   "type": "Demi-permanent glaze (zero lift)",
+   "pg": "PDF p.9",
+   "summary": "Zero lift, zero damage colour glaze. After blonding/lightening, between colour appointments, natural correction (balance moderate unevenness or darken without pre-colouring), balancing lengths with Koleston Perfect ME+ or Illumina on the root.",
+   "mix": [
+    {
+     "for": "All shades",
+     "ratio": "1:1",
+     "eg": "1 part colour + 1 part Shinefinity Activator"
+    }
+   ],
+   "dev": [
+    {
+     "d": "Shinefinity Activator",
+     "use": "Only developer"
+    }
+   ],
+   "time": [
+    {
+     "for": "All shades",
+     "noheat": "Up to 20 min"
+    },
+    {
+     "for": "Flash shades 010/0, 010/6, 010/8",
+     "noheat": "5 min"
+    }
+   ],
+   "apply": "Pre-shampooed towel-dried, or dry hair. Add water and emulsify, then shampoo; no post-colour treatment needed. Pre-shampooed hair gives a softer result and shorter development."
+  },
+  {
+   "id": "bmb",
+   "name": "Blondor Multi Blonde Powder",
+   "type": "Lightener",
+   "pg": "PDF p.10",
+   "summary": "Dust-free blue powder, up to 7 levels of lift; anti-yellow molecules.",
+   "mix": [
+    {
+     "for": "Standard",
+     "ratio": "1:1.5",
+     "eg": "30g powder + 45ml Welloxon Perfect 4%, 6%, 9% or 12%"
+    },
+    {
+     "for": "On scalp",
+     "ratio": "1:2",
+     "eg": "6% only"
+    }
+   ],
+   "dev": [
+    {
+     "d": "4%, 6%, 9%, 12% Welloxon Perfect",
+     "use": "By lift needed"
+    },
+    {
+     "d": "1.9% Welloxon Perfect Pastel",
+     "use": "Can be used"
+    }
+   ],
+   "time": [
+    {
+     "for": "All",
+     "noheat": "By lift needed and hair condition; do not exceed 50 min. Do not use heat."
+    }
+   ]
+  },
+  {
+   "id": "bsb",
+   "name": "Blondor Soft Blonde Cream",
+   "type": "Lightener (cream)",
+   "pg": "PDF p.10",
+   "summary": "Cream lightener recommended for on-scalp techniques, up to 7 levels of lift.",
+   "mix": [
+    {
+     "for": "Standard",
+     "ratio": "1:1",
+     "eg": "30g cream + 30ml Welloxon Perfect 4%, 6%, 9% or 12%"
+    },
+    {
+     "for": "On scalp",
+     "ratio": "1:2",
+     "eg": "6% only"
+    }
+   ],
+   "dev": [
+    {
+     "d": "4%, 6%, 9%, 12% Welloxon Perfect",
+     "use": "By lift needed"
+    },
+    {
+     "d": "1.9% Welloxon Perfect Pastel",
+     "use": "Can be used"
+    }
+   ],
+   "time": [
+    {
+     "for": "All",
+     "noheat": "By lift needed and hair condition; do not exceed 50 min. Do not use heat."
+    }
+   ]
+  },
+  {
+   "id": "bp9",
+   "name": "BlondorPlex 9 Powder",
+   "type": "Lightener (bond builder)",
+   "pg": "PDF p.10",
+   "summary": "Lightening powder with bond builder technology, up to 9 levels of lift.",
+   "mix": [
+    {
+     "for": "Standard",
+     "ratio": "1:1.5",
+     "eg": "30g powder + 45ml Welloxon Perfect 4%, 6%, 9% or 12% (6% on scalp only)"
+    }
+   ],
+   "dev": [
+    {
+     "d": "4%, 6%, 9%, 12% Welloxon Perfect",
+     "use": "By lift needed; 6% only on scalp"
+    },
+    {
+     "d": "1.9% Welloxon Perfect Pastel",
+     "use": "Can be used"
+    }
+   ],
+   "time": [
+    {
+     "for": "All",
+     "noheat": "By lift needed and hair condition; do not exceed 50 min. Do not use heat."
+    }
+   ]
+  },
+  {
+   "id": "fl",
+   "name": "Blondor Freelights",
+   "type": "Lightener (freehand)",
+   "pg": "PDF p.12",
+   "summary": "White lightening powder for freehand and highlight techniques, up to 7 levels of lift. Use only with Freelights developers.",
+   "mix": [
+    {
+     "for": "Standard",
+     "ratio": "1:1 to 1:3 (1:1.5 recommended)",
+     "eg": "with Freelights Developer 6%, 9% or 12%"
+    }
+   ],
+   "dev": [
+    {
+     "d": "Freelights Developer 6%, 9%, 12%",
+     "use": "By lift needed"
+    }
+   ],
+   "time": [
+    {
+     "for": "All",
+     "noheat": "Up to 50 min, by lift needed"
+    }
+   ]
+  },
+  {
+   "id": "mg",
+   "name": "Magma by Blondor",
+   "type": "Lightener + toner in one",
+   "pg": "PDF p.14",
+   "summary": "Lifts and tones in one step on coloured or virgin hair, for foils and freehand. Off-scalp only, on dry hair.",
+   "mix": [
+    {
+     "for": "Freehand",
+     "ratio": "1:1.5 to 1:2",
+     "eg": "with Freelights Developer 6%, 9% or 12%"
+    },
+    {
+     "for": "Foils",
+     "ratio": "1:1.5",
+     "eg": "with Welloxon Perfect 4%, 6%, 9% or 12%"
+    },
+    {
+     "for": "Very soft results",
+     "ratio": "1:1.5",
+     "eg": "with Welloxon Perfect Pastel 1.9%"
+    }
+   ],
+   "dev": [],
+   "time": [
+    {
+     "for": "Red shades",
+     "heat": "20–40 min",
+     "noheat": "30–60 min"
+    },
+    {
+     "for": "Blonde shades",
+     "heat": "15–30 min",
+     "noheat": "30–60 min"
+    }
+   ]
+  },
+  {
+   "id": "bct",
+   "name": "BlondorPlex Cream Toners",
+   "type": "Toner",
+   "pg": "PDF p.15",
+   "summary": "Express toning after any bleaching service; neutralises unwanted warmth and brassiness.",
+   "mix": [
+    {
+     "for": "Express toning",
+     "ratio": "1:2",
+     "eg": "with Welloxon Perfect Pastel 1.9%"
+    },
+    {
+     "for": "Express toning and base breaking",
+     "ratio": "1:2",
+     "eg": "with Welloxon Perfect 4%"
+    }
+   ],
+   "dev": [],
+   "time": [
+    {
+     "for": "All",
+     "noheat": "5 min. Longer gives more neutralisation and a deeper, more saturated result."
+    }
+   ],
+   "apply": "After lightening, shampoo and post-service treatment, then tone."
+  }
+ ],
+ "corrective": [
+  {
+   "id": "mild",
+   "group": "Removing colour",
+   "name": "Mild lightener",
+   "pg": "pp.27, 68 (PDF 27, 128)",
+   "when": "Removing old colour, bands or a build-up of pigment, and preparing hair for a new colour. Controlled lift of up to 2–3 levels.",
+   "mix": "1:4 — 1 part Blondor (Multi Blonde Powder 7, Soft Blonde Cream 7 or BlondorPlex 9) + 4 parts Welloxon Perfect Pastel 1.9%",
+   "apply": "Bowl and brush on dry hair, darkest areas first (or on pre-shampooed hair for softer results). Check porosity first.",
+   "time": "Up to 30 min, or until the undertone you want is reached",
+   "remove": "Rinse, shampoo and anti-oxy (neutralise). Dry, then apply the chosen colour; demi and semi-permanent can go on damp hair."
+  },
+  {
+   "id": "blondor",
+   "group": "Removing colour",
+   "name": "Blondor lightening",
+   "pg": "p.27 (PDF 27)",
+   "when": "Greater lightening, if the hair's condition allows. Assess texture and porosity first.",
+   "mix": "1:1.5 to 1:2 — 1 part Blondor + 1.5 or 2 parts Welloxon Perfect 4% to 12%",
+   "apply": "Bowl and brush on dry hair, darkest areas first; work gently into the hair.",
+   "time": "Up to 50 min",
+   "remove": "Rinse, shampoo and neutralise."
+  },
+  {
+   "id": "renew",
+   "group": "Removing colour",
+   "name": "Color Renew",
+   "pg": "pp.28, 69 (PDF 28, 129)",
+   "when": "Gentle alternative to persulfate products: reduces unwanted oxidative colour without lightening the natural colour. Allows more frequent colour changes.",
+   "mix": "1:10 — one 9g sachet Color Renew Crystal Powder (A) + 90ml Activator Liquid (B)",
+   "apply": "Bowl or applicator bottle; roots to mid-lengths and ends.",
+   "time": "5–45 min, depending on how much colour you want to reduce",
+   "remove": "Rinse with water only, then go on with the target colour. If cleaning out highlights: rinse, shampoo and condition."
+  },
+  {
+   "id": "pf",
+   "group": "Pre-pigmentation",
+   "name": "Pre-pigmentation with Perfecton",
+   "pg": "pp.29, 65 (PDF 29, 125)",
+   "when": "Darkening bleached hair to depth 8 and darker. Follow with Koleston Perfect or Illumina Color. Shades shown: /3, /43, /44.",
+   "mix": "20ml Perfecton + 40ml warm water",
+   "apply": "Bottle or sponge on dry hair; comb through evenly.",
+   "time": "Up to 15 min (p.65: 10–15 min)",
+   "remove": "Pat dry with a tissue or towel (p.65: towel dry or cool hairdryer), then apply the chosen formula."
+  },
+  {
+   "id": "043",
+   "group": "Pre-pigmentation",
+   "name": "Pre-pigmentation with Koleston Perfect Special Mix 0/43",
+   "pg": "pp.29, 65 and poster (PDF 29, 125, 166)",
+   "when": "Rich, vibrant target shades (reds and coppers). 0/43 has the high amount of direct dye needed for pre-pigmentation. Follow with vibrant or warm Koleston Perfect shades.",
+   "mix": "15g 0/43 + 60ml warm water",
+   "apply": "Bowl and brush or sponge on dry, lightened hair only; comb through evenly.",
+   "time": "Up to 15 min, no heat (poster: 10–15 min)",
+   "remove": "Rinse and dry, then apply the Koleston Perfect target shade.",
+   "conflict": "The pages disagree on depth: p.29 and the poster say depth 8/0 or darker; p.65 says 6/0 or darker. The method list on p.65 also says levels 6 and below."
+  },
+  {
+   "id": "ctfill",
+   "group": "Darkening",
+   "name": "Color Touch filling (2 steps)",
+   "pg": "pp.30, 66 and poster (PDF 30, 126, 177)",
+   "when": "Going darker without the commitment of permanent colour; ideal for poor condition, high porosity hair.",
+   "mix": "Step 1 (filler): 1 part Color Touch + 2 parts Color Touch Emulsion 1.9% (e.g. 30g + 60g), using the chart below. Step 2: your target shade.",
+   "apply": "Bowl and brush or bottle on pre-shampooed, towel-dried hair; comb through evenly.",
+   "time": "Up to 20 min",
+   "remove": "Rinse until the water runs clear, towel dry, then apply the target Color Touch shade.",
+   "tableHead": [
+    "Target depth",
+    "Step 1 filler (p.30)"
+   ],
+   "table": [
+    [
+     "9",
+     "9/03 + 10/0 (1:1.5)"
+    ],
+    [
+     "8",
+     "9/73 + 9/03 (1:2)"
+    ],
+    [
+     "7",
+     "8/73 + 9/03 (1:7)"
+    ],
+    [
+     "6",
+     "8/73 + 9/03 (1:2)"
+    ],
+    [
+     "5",
+     "7/7"
+    ],
+    [
+     "4",
+     "6/7 + 6/4 + 9/03 (2:1:1)"
+    ],
+    [
+     "3",
+     "6/7 + 6/4 (1:2)"
+    ],
+    [
+     "2",
+     "6/7 + 6/4 (1:3)"
+    ]
+   ],
+   "tip": "Filling formulas are a guide: adjust for hair condition and porosity. Too warm an undertone when pre-pigmenting keeps exposing too much red (p.66).",
+   "conflict": "The poster (PDF p.177) gives the same mixes in grams but from depth 6 down puts them one depth lower: 6 = 15g 9/03 + 5g 8/73 or 30g 7/7; 5 = 5g 6/4 + 10g 6/7 + 5g 9/03; 4 = 20g 6/4 + 10g 6/7; 3 = 15g 6/4 + 5g 6/7; 2 = none. Check which your educator uses."
+  },
+  {
+   "id": "kpbtn",
+   "group": "Darkening",
+   "name": "Koleston Perfect back to natural (1 step)",
+   "pg": "pp.31, 67 and poster (PDF 31, 127, 165)",
+   "when": "Long-lasting, natural-looking result when darkening pre-lightened or highlighted hair, in one step.",
+   "mix": "1 part formula + 2 parts Welloxon Perfect 4% (e.g. 30g + 60g), using the chart below",
+   "apply": "Bowl and brush on dry hair; saturate the pre-lightened hair and avoid the natural regrowth to prevent lift. Comb through with a wide-tooth comb every 10 min.",
+   "time": "Up to 40 min, without heat",
+   "remove": "Rinse thoroughly, shampoo lightly and finish with INVIGO Post Color Treatment.",
+   "tableHead": [
+    "Target depth",
+    "Formula"
+   ],
+   "table": [
+    [
+     "8/0",
+     "8/03 + 8/7 (5:1) — e.g. 50g + 10g"
+    ],
+    [
+     "7/0",
+     "7/00 + 7/03 (5:1) — e.g. 50g + 10g"
+    ],
+    [
+     "6/0",
+     "6/0 + 6/7 (4:1) — e.g. 40g + 10g"
+    ],
+    [
+     "5/0",
+     "55/0 + 5/77 (1:1)"
+    ],
+    [
+     "4/0",
+     "44/0 + 4/77 (1:1)"
+    ],
+    [
+     "3/0",
+     "2/0 + 4/77 (1:1)"
+    ],
+    [
+     "2/0",
+     "2/0 + 4/77 (1:1)"
+    ]
+   ],
+   "tip": "To enhance or adjust tone afterwards, overlay a gloss: target shade 1:1:1 with Welloxon Perfect Pastel 1.9% and INVIGO Post Color Treatment, up to 15 min (p.67).",
+   "conflict": "For 3/0 the poster (PDF p.165) gives 10g 2/0 + 20g 4/77 (1:2), where p.31 gives 1:1."
+  }
+ ]
+}

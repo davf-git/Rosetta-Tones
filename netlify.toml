@@ -1,0 +1,15 @@
+# Plain static HTML: no build step. Netlify publishes the site/ folder as-is.
+[build]
+  publish = "site"
+  command = ""
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Keep the prototype out of search engines while it is a private trial.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

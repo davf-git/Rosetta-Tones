@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Wheel Lab</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: a phone-sized test bench for the tone wheel. Desktop shows a phone frame with notes beside it; a real phone gets the screen. Two concepts switch at the top; a slider tunes each. */
+:root{
+  --bg:#eceeed; --panel:#f8f9f8; --ink:#1b2023; --muted:#5d666b; --line:#cfd5d4; --accent:#5a3654; --shade:#d9dedd;
+  --f-display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-code:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15191b;--panel:#1d2225;--ink:#e7ebea;--muted:#9aa4a8;--line:#323a3e;--accent:#c99bbf;--shade:#0f1214;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#15191b;--panel:#1d2225;--ink:#e7ebea;--muted:#9aa4a8;--line:#323a3e;--accent:#c99bbf;--shade:#0f1214;color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--f-body)}
+.stage{min-height:100%}
+.phone{height:100%;display:flex;flex-direction:column;background:var(--bg);overflow:hidden;position:relative}
+.stage{display:flex;flex-direction:column-reverse;height:100%}
+.phone{flex:1;min-height:0}
+.aside{display:flex;flex-direction:column;gap:6px;padding:8px max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));background:var(--shade);border-top:1px solid var(--line)}
+.aside>:not(.controls){display:none}
+.aside{max-height:42vh;overflow:auto}
+.controls{display:flex;flex-direction:column;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+@media (min-width:860px){
+  .stage{flex-direction:row}.aside{background:none;border:0;padding:0}.aside>:not(.controls){display:revert}
+  body{background:var(--shade)}
+  .stage{display:flex;align-items:center;justify-content:center;gap:48px;padding-block:28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));box-sizing:border-box;height:100%}
+  .phone{width:390px;height:min(844px,calc(100% - 20px));flex:none;border:11px solid #141110;border-radius:48px;box-shadow:0 30px 60px -20px rgba(0,0,0,.4)}
+  .aside{display:flex;flex-direction:column;gap:10px;max-width:320px;max-height:100%;overflow:auto}
+}
+.top{padding:12px 16px 8px;display:flex;flex-direction:column;gap:8px;background:var(--panel);border-bottom:1px solid var(--line)}
+@media (min-width:860px){.top{padding-top:30px}}
+h1{font:700 19px var(--f-display);margin:0}
+h2{font:700 22px var(--f-display);margin:0}
+.seg{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{flex:1;border:0;background:transparent;color:var(--ink);font:500 13.5px var(--f-body);padding:7px 10px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.tune{display:grid;grid-template-columns:104px minmax(0,1fr) 52px;align-items:center;gap:8px;font-size:12px;color:var(--muted)}.tune span:last-child{text-align:right;font-family:var(--f-code)}
+#sliders{display:flex;flex-direction:column;gap:6px}
+.btns{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}.btns .saved{font-size:11.5px;color:var(--muted);align-self:center;margin-right:auto}
+.reset{border:1px solid var(--line);background:transparent;color:var(--muted);font:500 12px var(--f-body);border-radius:999px;padding:3px 10px;cursor:pointer}
+.tune input{flex:1;accent-color:var(--accent)}
+.top{position:absolute;top:0;left:0;right:0;z-index:3;background:color-mix(in srgb,var(--panel) 72%,transparent);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.view{flex:1;min-height:0;position:relative;overflow:hidden;height:100%}
+.stack{position:absolute;left:0;right:0;top:0;z-index:0}
+.clip{position:relative;overflow:hidden;flex:none}
+.clip svg{position:absolute;left:50%;top:0;transform:translateX(-50%)}
+svg text{font-family:var(--f-code)}
+#rot,.up,.rl{transition:transform .75s cubic-bezier(.45,.05,.2,1)}
+.mini .sector{transition:transform .5s cubic-bezier(.3,.7,.2,1)}.mini .sector path{transition:fill-opacity .4s}
+.wedge svg{will-change:transform}
+.kl{font:600 10.5px var(--f-body);fill:#fff;letter-spacing:.04em;pointer-events:none}.kname{font:700 15px var(--f-body);letter-spacing:.14em;fill:#fff}.nocode{font:500 12px var(--f-body);fill:var(--muted)}
+.kgrp{display:flex;align-items:center;justify-content:space-between;font:600 11px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.wl path{fill:var(--ink);fill-opacity:.94}.wl text{fill:var(--panel);font:600 13px var(--f-body)}
+.up,.tan{transform-box:fill-box;transform-origin:center}
+@media (prefers-reduced-motion:reduce){#rot,.up,.rl{transition:none}}
+.sector{cursor:pointer}
+.dot{cursor:pointer}.dot rect{stroke:var(--panel);stroke-width:1.5}.dot text{fill:#fff;font-weight:600}
+.dot.dim{opacity:.4}.dot.sel rect{stroke:var(--ink);stroke-width:3.5}
+.seclab{font:700 15px var(--f-body);letter-spacing:.12em;fill:#fff;cursor:pointer}
+.rl path{fill:var(--ink);fill-opacity:.94}.rl text{fill:var(--panel);font:600 13px var(--f-body)}
+.sheet{box-sizing:border-box;position:absolute;left:0;right:0;bottom:0;z-index:2;overflow:auto;overscroll-behavior:contain;transition:height .25s ease;background:var(--panel);border-top:1px solid var(--line);padding:12px 16px 20px;border-radius:16px 16px 0 0;box-shadow:0 -6px 18px rgba(0,0,0,.08)}
+.sheet.drag{transition:none}
+.grabbar{margin:-12px -16px 4px;padding:10px 16px 6px;cursor:grab;touch-action:none;position:sticky;top:-12px;background:var(--panel);z-index:1}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--muted);opacity:.5;margin:0 auto}
+.grabbar .hint{display:block;text-align:center;font-size:11px;color:var(--muted);margin-top:4px}
+.opp{font-size:13px;color:var(--muted);margin:2px 0 8px}
+.opp b{color:var(--ink)}
+.row{display:grid;grid-template-columns:70px minmax(0,1fr);gap:8px;padding:7px 0;border-top:1px solid var(--line);align-items:baseline}
+.row.sel{background:color-mix(in srgb,var(--accent) 12%,transparent);margin-inline:-8px;padding-inline:8px;border-radius:6px}
+.tag{font:600 13px var(--f-code);color:#fff;border-radius:11px;padding:1px 8px;margin-right:6px;display:inline-block}
+.note{font-size:12.5px;color:var(--muted)}
+.mini svg{display:block;margin:0 auto}
+.wedge{flex:none;position:relative}
+.aside h2{font-size:26px}
+.aside p{margin:0}
+.aside ul{margin:0;padding-left:18px;font-size:14px}
+</style>
+</head>
+<body>
+
+
+<div class="stage">
+<div class="phone" id="phone">
+  <div class="top">
+    <h1>Rosetta Tone Lab</h1>
+  </div>
+  <div class="view" id="view"></div>
+</div>
+<div class="aside">
+  <h2>Wheel Lab</h2>
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Layout"><button data-m="clip" aria-pressed="true">Clipped wheel</button><button data-m="pop" aria-pressed="false">Keyhole</button></div>
+    <div id="sliders"></div>
+    <div class="btns"><span class="saved" id="savedMsg"></span><button id="saveDef" class="reset">Save as default</button><button id="copySet" class="reset" title="Copy the current settings to paste into a message">Copy settings</button><button id="reset" class="reset">Reset</button><button id="factory" class="reset" title="Back to the original settings">Factory</button></div>
+    <textarea id="setOut" hidden readonly rows="3" style="width:100%;box-sizing:border-box;font:11px var(--f-code);border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);padding:6px"></textarea>
+  </div>
+  <p class="note">Two ways to fit the tone wheel on a phone. Tap a colour segment to turn the wheel; tap a code to highlight it below. Five brands, one ring each.</p>
+  <ul>
+    <li><b>Clipped wheel</b>: the wheel is wider than the screen and cropped at the sides, so the chosen family (bottom) and its opposite (top) stay visible. Sliders set how far it overflows and its vertical position.</li>
+    <li><b>Keyhole</b>: a small dial for navigation. The chosen segment grows out of the dial's centre into a large wedge, ring by ring, one per brand, ending with the family name. Tap another segment: the wedge pulls back, the dial turns, and the new wedge grows. Timing sliders tune each step; Slow motion helps judge it.</li>
+  </ul>
+  <p class="note">The detail sheet at the bottom drags up to show every brand's codes for the family, and back down. Tapping its handle toggles it.</p>
+  <p class="note">On a phone this opens full screen.</p>
+</div>
+</div>
+
+<script>
+const D={"fam":{"natural":{"name":"Natural / neutral","hue":null},"red":{"name":"Red","hue":0},"copper":{"name":"Copper / orange","hue":60},"gold":{"name":"Gold / yellow","hue":120},"green":{"name":"Green / matt","hue":180},"ash":{"name":"Ash / blue","hue":240},"pearl":{"name":"Pearl / blue-violet","hue":270},"violet":{"name":"Violet","hue":300},"mahogany":{"name":"Mahogany / red-violet","hue":330},"brown":{"name":"Brown / mocha","hue":null},"clear":{"name":"Clear / diluter","hue":null}},"brands":[{"short":"L'Oréal","tones":[{"s":".0 N","l":"Natural","f":"natural"},{"s":".1 B","l":"Blue (ash)","f":"ash"},{"s":".2 V","l":"Violet","f":"violet"},{"s":".3 G","l":"Gold","f":"gold"},{"s":".4 C","l":"Copper","f":"copper"},{"s":".5 Rv","l":"Red-violet","f":"mahogany"},{"s":".6 R","l":"Red","f":"red"},{"s":".7 Gr","l":"Green","f":"green"},{"s":".8 M","l":"Mocha","f":"brown"}]},{"short":"Wella","tones":[{"s":"/0","l":"Natural","f":"natural"},{"s":"/1","l":"Ash","f":"ash"},{"s":"/2","l":"Matt","f":"green"},{"s":"/3","l":"Gold","f":"gold"},{"s":"/4","l":"Red","f":"red"},{"s":"/5","l":"Mahogany","f":"mahogany"},{"s":"/6","l":"Violet","f":"violet"},{"s":"/7","l":"Brown","f":"brown"},{"s":"/8","l":"Pearl","f":"pearl"},{"s":"/9","l":"Cendre","f":"ash"}]},{"short":"TIGI","tones":[{"s":"/0","l":"Natural","f":"natural"},{"s":"/1","l":"Blue","f":"ash"},{"s":"/2","l":"Violet","f":"violet"},{"s":"/3","l":"Gold","f":"gold"},{"s":"/4","l":"Copper","f":"copper"},{"s":"/5","l":"Mahogany","f":"mahogany"},{"s":"/6","l":"Red","f":"red"},{"s":"/7","l":"Green (matte)","f":"green"},{"s":"/8","l":"Ash (calibrated)","f":"ash"}]},{"short":"Matrix","tones":[{"s":"N","l":"Neutral","f":"natural"},{"s":"A","l":"Ash","f":"ash"},{"s":"V","l":"Violet","f":"violet"},{"s":"G","l":"Gold / warm","f":"gold"},{"s":"C","l":"Copper","f":"copper"},{"s":"B","l":"Brown","f":"brown"},{"s":"R","l":"Red","f":"red"},{"s":"J","l":"Jade","f":"green"},{"s":"M","l":"Mocha","f":"brown"},{"s":"P","l":"Pearl","f":"pearl"},{"s":"W","l":"Warm","f":"gold"}]},{"short":"Redken","tones":[{"s":"T","l":"Titanium (silver/blue)","f":"ash"},{"s":"B","l":"Blue","f":"ash"},{"s":"P","l":"Pearl (blue/violet)","f":"pearl"},{"s":"M","l":"Matte (blue/green)","f":"green"},{"s":"N","l":"Natural (blue/violet)","f":"natural"},{"s":"A","l":"Ash (in NA, AG) / Auburn (AA)","f":"ash"},{"s":"G","l":"Gold","f":"gold"},{"s":"W","l":"Warm","f":"gold"},{"s":"C","l":"Copper","f":"copper"},{"s":"R","l":"Red","f":"red"},{"s":"V","l":"Violet","f":"violet"},{"s":"Ro","l":"Rose","f":"mahogany"},{"s":"Ch","l":"Chocolate","f":"brown"}]}]};
+const FAMCOL={red:"#b3322b",copper:"#cf6a26",gold:"#c99a1f",green:"#5d8a4c",ash:"#4f78a6",pearl:"#7570aa",violet:"#6d4790",mahogany:"#7b2948",natural:"#9a8466",brown:"#6b4a33"};
+const ORDER=["red","copper","gold","green","ash","pearl","violet","mahogany"];
+const short=f=>D.fam[f].name.split(" /")[0];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const $=s=>document.querySelector(s);
+const MID={},BND={};
+ORDER.forEach((f,i)=>{const h=D.fam[f].hue,p=D.fam[ORDER[(i+7)%8]].hue,n=D.fam[ORDER[(i+1)%8]].hue;const a0=h-((h-p+360)%360)/2,a1=h+((n-h+360)%360)/2;BND[f]=[a0,a1];MID[f]=(a0+a1)/2});
+const S={m:"clip",fam:"violet",rot:0,sel:null,zoom:160,spread:70,vposA:0,vposB:0,dial:190,gap:0,sheetH:null};
+const tr=(f,cur)=>{let t=180-MID[f],d=((t-cur)%360+540)%360-180;return cur+d};
+S.rot=tr(S.fam,0);
+const comp=f=>{const t=(MID[f]+180)%360;return ORDER.reduce((a,x)=>{const d=v=>Math.abs(((MID[v]-t)%360+540)%360-180);return d(x)<d(a)?x:a})};
+function P(cx,cy,r,deg){const a=(deg-90)*Math.PI/180;return[cx+r*Math.cos(a),cy+r*Math.sin(a)]}
+function arc(cx,cy,r0,r1,a0,a1){const[x0,y0]=P(cx,cy,r1,a0),[x1,y1]=P(cx,cy,r1,a1),[x2,y2]=P(cx,cy,r0,a1),[x3,y3]=P(cx,cy,r0,a0);const lg=(a1-a0)>180?1:0;return`M${x0},${y0}A${r1},${r1} 0 ${lg} 1 ${x1},${y1}L${x2},${y2}A${r0},${r0} 0 ${lg} 0 ${x3},${y3}Z`}
+
+/* ---------- concept A: clipped wheel ---------- */
+const C=360,R1=300,R0=78;
+const dotRot=a=>{const s=((a+S.rot)%360+360)%360;return(s<90||s>270)?a:a-180};
+function lpath(f){const[a0,a1]=BND[f],r=R1+22,s=((MID[f]+S.rot)%360+360)%360,top=s<90||s>270;const[x0,y0]=P(C,C,r,a0),[x1,y1]=P(C,C,r,a1);return top?`M${x0},${y0}A${r},${r} 0 0 1 ${x1},${y1}`:`M${x1},${y1}A${r},${r} 0 0 0 ${x0},${y0}`}
+let EXT=[];
+function wheelA(){
+  const B=D.brands,w=(R1-R0)/B.length;let g="";EXT=B.map(()=>({}));
+  ORDER.forEach(f=>{const[a0,a1]=BND[f];g+=`<path class="sector" data-f="${f}" d="${arc(C,C,R0,R1,a0,a1)}" fill="${FAMCOL[f]}" fill-opacity="${S.fam===f?.34:.12}" stroke="var(--panel)" stroke-width="3"/><path class="sector band" data-f="${f}" d="${arc(C,C,R1+2,R1+44,a0,a1)}" fill="${FAMCOL[f]}" fill-opacity="${S.fam===f?1:.82}" stroke="var(--panel)" stroke-width="3"/><path id="lp-${f}" d="${lpath(f)}" fill="none"/><text class="seclab" data-f="${f}"><textPath href="#lp-${f}" startOffset="50%" text-anchor="middle" dominant-baseline="central">${short(f).toUpperCase()}</textPath></text>`});
+  B.forEach((b,i)=>{g+=`<circle cx="${C}" cy="${C}" r="${R1-w*i}" fill="none" stroke="var(--panel)" stroke-width="3"/>`});
+  B.forEach((b,i)=>{const r=R1-w*i-w/2,by={};b.tones.forEach((t,k)=>{if(MID[t.f]!=null)(by[t.f]=by[t.f]||[]).push(k)});
+    Object.entries(by).forEach(([f,ks])=>{const wd=ks.map(k=>Math.max(38,b.tones[k].s.length*9+16)),tot=wd.reduce((a,x)=>a+x+5,-5);let off=-tot/2;EXT[i][f]=tot/2;
+      ks.forEach((k,j)=>{const ang=MID[f]+(off+wd[j]/2)/r*57.2958;off+=wd[j]+5;const[x,y]=P(C,C,r,ang),sel=S.sel&&S.sel[0]===i&&S.sel[1]===k;
+        g+=`<g class="dot${S.fam!==f?" dim":""}${sel?" sel":""}" data-f="${f}" data-b="${i}" data-k="${k}"><g transform="translate(${x.toFixed(1)},${y.toFixed(1)})"><g class="tan" data-a="${ang.toFixed(2)}" style="transform:rotate(${dotRot(ang)}deg)"><rect x="${-wd[j]/2}" y="-15" width="${wd[j]}" height="30" rx="15" fill="${FAMCOL[f]}"/><text text-anchor="middle" dominant-baseline="central" style="font-size:15px">${esc(b.tones[k].s)}</text></g></g></g>`})})});
+  let labs="";B.forEach((b,i)=>{const len=b.short.length*8+30;labs+=`<g class="rl" id="rl${i}" style="transform:${rlPos(i)}"><path d="M${-len},-13 H-13 L0,0 L-13,13 H${-len} A13,13 0 0 1 ${-len},-13 Z"/><text x="${-(len+13)/2}" text-anchor="middle" dominant-baseline="central">${esc(b.short)}</text></g>`});
+  const nm=D.fam[S.fam].name.split(" / ");
+  return`<svg viewBox="0 0 720 720" id="wA" role="img" aria-label="Tone wheel"><g id="rot" style="transform-box:view-box;transform-origin:${C}px ${C}px;transform:rotate(${S.rot}deg)">${g}</g>
+  <circle id="cD" cx="${C}" cy="${C}" r="${R0-3}" fill="${FAMCOL[S.fam]}" stroke="var(--panel)" stroke-width="3"/>
+  <text id="cN" x="${C}" y="${C+8}" text-anchor="middle" style="font:700 26px var(--f-display);fill:#fff">${esc(nm[0])}</text>${labs}
+  <path d="M${C-11},${C+R1+56} L${C+11},${C+R1+56} L${C},${C+R1+42}Z" fill="var(--ink)"/></svg>`;
+}
+function rlPos(i){const B=D.brands,w=(R1-R0)/B.length,r=R1-w*i-w/2,ex=Math.max(0,...EXT.map(e=>e[S.fam]||0));return`translate(${C-ex-8}px,${C+r}px)`}
+function viewA(){
+  const W=$("#view").clientWidth,size=Math.round(W*S.zoom/100);
+  const T=TOPH(),H=$("#view").clientHeight-T,ch=Math.min(Math.round(size*0.99),Math.round(H*0.74));
+  AUTO=Math.max(90,Math.min(H*.86,H-ch-S.vposA-14));
+  return`<div class="stack" style="top:${T}px;transform:translateY(${S.vposA}px)"><div class="clip" style="height:${ch}px">${wheelA().replace('<svg ',`<svg width="${size}" height="${size}" style="top:auto;bottom:0" `)}</div></div>${sheet()}`;
+}
+function bindA(){
+  document.querySelectorAll("#rot .sector,#rot .seclab").forEach(x=>x.onclick=()=>pick(x.dataset.f));
+  document.querySelectorAll("#rot .dot").forEach(x=>x.onclick=()=>pick(x.dataset.f,[+x.dataset.b,+x.dataset.k]));
+}
+function turnA(){
+  $("#rot").style.transform=`rotate(${S.rot}deg)`;
+  document.querySelectorAll("#rot .tan").forEach(u=>u.style.transform=`rotate(${dotRot(+u.dataset.a)}deg)`);
+  document.querySelectorAll("#rot .dot").forEach(d=>{d.classList.toggle("dim",d.dataset.f!==S.fam);d.classList.toggle("sel",!!S.sel&&+d.dataset.b===S.sel[0]&&+d.dataset.k===S.sel[1])});
+  document.querySelectorAll("#rot .sector").forEach(p=>p.setAttribute("fill-opacity",p.classList.contains("band")?(p.dataset.f===S.fam?1:.82):(p.dataset.f===S.fam?.34:.12)));
+  ORDER.forEach(f=>$("#lp-"+f).setAttribute("d",lpath(f)));
+  $("#cD").setAttribute("fill",FAMCOL[S.fam]);$("#cN").textContent=D.fam[S.fam].name.split(" / ")[0];
+  D.brands.forEach((b,i)=>$("#rl"+i).style.transform=rlPos(i));
+}
+
+/* ---------- concept B: keyhole ----------
+   One SVG: a small dial with the chosen family at the bottom. The chosen segment grows out of the dial's
+   hole into a large wedge, one ring per brand, then the outer band with the family name. Driven frame by
+   frame from a single timeline so retract, turn and grow can be timed independently. */
+const easeIO=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2,easeO=x=>1-Math.pow(1-x,3),cl=x=>Math.max(0,Math.min(1,x));
+const K={tau:0,A:0,f:null,raf:0,g:null};
+function kGeo(){const W=$("#view").clientWidth,rD=S.dial/2,r0=Math.round(rD*.38),cx=W/2,cy=rD+10,R=Math.round(rD+S.len),band=34,N=D.brands.length,w=(R-band-r0)/N;
+  const rings=[];for(let k=0;k<N;k++)rings.push([r0+k*w,r0+(k+1)*w]);rings.push([r0+N*w,R]);
+  return{W,rD,r0,cx,cy,R,band,N,w,rings,H:Math.ceil(cy+R+14)}}
+const kEnd=()=>Math.max(S.fan,(K.g?K.g.N:5)*S.step+S.grow);
+const secW=f=>BND[f][1]-BND[f][0];
+function viewB(){const g=K.g=kGeo(),f=S.fam;K.f=f;K.A=S.rot;
+  AUTO=Math.max(90,Math.min(($("#view").clientHeight-TOPH())*.86,$("#view").clientHeight-TOPH()-g.H-S.vposB-6));
+  return`<div class="stack" style="top:${TOPH()}px;transform:translateY(${S.vposB}px)">${keySvg()}</div>${sheet(true)}`}
+function keySvg(){const g=K.g,{cx,cy,rD,r0,W,H}=g,f=S.fam;let dial="",wedge="",items="";
+  ORDER.forEach(x=>{const[a0,a1]=BND[x],[tx,ty]=P(cx,cy,(r0+rD)/2,MID[x]);
+    dial+=`<g class="sector" data-f="${x}"><path d="${arc(cx,cy,r0,rD,a0,a1)}" fill="${FAMCOL[x]}" fill-opacity="${x===f?1:.78}" stroke="var(--panel)" stroke-width="2.5"/><text class="kl" data-x="${tx.toFixed(1)}" data-y="${ty.toFixed(1)}" x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" dominant-baseline="central">${short(x).slice(0,5).toUpperCase()}</text></g>`});
+  g.rings.forEach((r,k)=>{const last=k===g.N;
+    wedge+=`<g class="kr" data-k="${k}"><path class="kb" fill="var(--panel)"/><path class="kt" fill="${FAMCOL[f]}" fill-opacity="${last?1:k%2?.22:.15}" stroke="var(--panel)" stroke-width="2"/></g>`});
+  wedge+=`<path class="ko" fill="none" stroke="${FAMCOL[f]}" stroke-width="2"/><path id="kwl" fill="none"/><text class="kname" opacity="0"><textPath href="#kwl" startOffset="50%" text-anchor="middle" dominant-baseline="central">${esc(short(f).toUpperCase())}</textPath></text>`;
+  const B=D.brands,cw=t=>Math.max(52,t.s.length*10+22);
+  const maxHalf=Math.max(30,...B.map(b=>{const ts=b.tones.filter(t=>t.f===f);return ts.length?ts.map(cw).reduce((a,x)=>a+x+8,-8)/2:30}));
+  const xr=cx-maxHalf-8;
+  B.forEach((b,i)=>{const y=cy+(g.rings[i][0]+g.rings[i][1])/2,len=b.short.length*8+30,ks=b.tones.map((t,k)=>k).filter(k=>b.tones[k].f===f);
+    let s=`<g class="wl" transform="translate(${Math.max(len+4,xr)},${y.toFixed(1)})"><path d="M${-len},-13 H-13 L0,0 L-13,13 H${-len} A13,13 0 0 1 ${-len},-13 Z"/><text x="${-(len+13)/2}" text-anchor="middle" dominant-baseline="central">${esc(b.short)}</text></g>`;
+    if(!ks.length)s+=`<text x="${cx}" y="${y}" text-anchor="middle" dominant-baseline="central" class="nocode">no code</text>`;
+    else{const wd=ks.map(k=>cw(b.tones[k])),tot=wd.reduce((a,x)=>a+x+8,-8);let x0=cx-tot/2;
+      ks.forEach((k,j)=>{const x=x0+wd[j]/2;x0+=wd[j]+8;const sel=S.sel&&S.sel[0]===i&&S.sel[1]===k;
+        s+=`<g class="dot${sel?" sel":""}" data-f="${f}" data-b="${i}" data-k="${k}"><rect x="${x-wd[j]/2}" y="${y-17}" width="${wd[j]}" height="34" rx="17" fill="${FAMCOL[f]}"/><text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" style="font-size:16px">${esc(b.tones[k].s)}</text></g>`})}
+    items+=`<g class="kit" data-k="${i}">${s}</g>`});
+  const cm=comp(f);
+  return`<svg id="key" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Tone wheel with ${esc(short(f))} codes by brand"><g id="kdial">${dial}</g><g id="kwedge">${wedge}</g>
+  <circle cx="${cx}" cy="${cy}" r="${r0-2}" fill="var(--panel)"/><text x="${cx}" y="${cy-6}" text-anchor="middle" style="font:600 ${Math.max(8,r0*.24).toFixed(1)}px var(--f-body);fill:var(--muted)">OPPOSITE</text><text id="oppT" x="${cx}" y="${cy+9}" text-anchor="middle" style="font:700 ${Math.max(10,r0*.33).toFixed(1)}px var(--f-display);fill:${FAMCOL[cm]}">${short(cm)}</text>
+  <g id="kitems">${items}</g></svg>`}
+/* draw one frame: tau = ms into the grow timeline, A = dial rotation */
+function kFrame(){const g=K.g,sv=$("#key");if(!g||!sv)return;const{cx,cy,r0}=g,f=K.f;
+  const dl=sv.querySelector("#kdial");dl.setAttribute("transform",`rotate(${K.A.toFixed(2)} ${cx} ${cy})`);
+  dl.querySelectorAll(".kl").forEach(t=>t.setAttribute("transform",`rotate(${(-K.A).toFixed(2)} ${t.dataset.x} ${t.dataset.y})`));
+  const sw=secW(f),fp=S.fan>0?easeO(cl(K.tau/S.fan)):1,ang=sw+(S.spread-sw)*fp,a0=180-ang/2,a1=180+ang/2;let outer=r0;
+  g.rings.forEach((r,k)=>{const p=S.grow>0?easeO(cl((K.tau-k*S.step)/S.grow)):(K.tau>=k*S.step?1:0),el=sv.querySelector(`.kr[data-k="${k}"]`);
+    if(p<=0){el.style.display="none"}else{el.style.display="";const ro=r[0]+(r[1]-r[0])*p,d=arc(cx,cy,r[0],ro,a0,a1);el.children[0].setAttribute("d",d);el.children[1].setAttribute("d",d);outer=Math.max(outer,ro)}
+    const it=sv.querySelector(`.kit[data-k="${k}"]`);if(it){it.style.opacity=cl((p-.55)/.45);it.setAttribute("transform",`translate(0,${(-(1-p)*(r[1]-r[0])*.6).toFixed(1)})`)}
+    if(k===g.N){const nm=sv.querySelector(".kname");nm.setAttribute("opacity",cl((p-.5)/.5));const rr=(r[0]+r[1])/2,[x0,y0]=P(cx,cy,rr,a1),[x1,y1]=P(cx,cy,rr,a0);sv.querySelector("#kwl").setAttribute("d",`M${x0},${y0}A${rr},${rr} 0 0 0 ${x1},${y1}`)}});
+  const ko=sv.querySelector(".ko");if(outer>r0+.5){ko.style.display="";ko.setAttribute("d",arc(cx,cy,r0,outer,a0,a1))}else ko.style.display="none";
+}
+function bindB(){document.querySelectorAll("#kdial .sector").forEach(x=>x.onclick=()=>pick(x.dataset.f));bindWedge()}
+function bindWedge(){document.querySelectorAll("#kitems .dot").forEach(x=>x.onclick=()=>pick(x.dataset.f,[+x.dataset.b,+x.dataset.k]))}
+const RM=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
+/* swap the wedge contents to the new family while it is retracted */
+function kSwap(){const st=$(".stack");if(!st)return;K.f=S.fam;st.innerHTML=keySvg();bindB();kFrame()}
+/* master timeline: retract, then turn, with the grow starting before the turn ends by "overlap" */
+function kPlay(A1,{turn=true}={}){cancelAnimationFrame(K.raf);
+  const sl=S.slow,tau0=K.tau,A0=K.A,Tend=kEnd();
+  if(RM()){K.A=A1;if(K.f!==S.fam)kSwap();K.tau=Tend;kFrame();return}
+  const Tr=S.tRet*(tau0/Math.max(1,Tend))*sl,Trot=turn&&Math.abs(A1-A0)>.01?S.tRot*sl:0,E=Tr+Trot*(1-S.ov/100),total=Math.max(Tr+Trot,E+Tend*sl);
+  let swapped=false;const t0=performance.now();
+  const tick=now=>{const t=now-t0;
+    if(t<Tr){K.tau=tau0*(1-t/Tr)}
+    else{if(!swapped){K.tau=0;if(K.f!==S.fam)kSwap();swapped=true}
+      K.A=Trot?A0+(A1-A0)*easeIO(cl((t-Tr)/Trot)):A1;K.tau=t<E?0:Math.min(Tend,(t-E)/sl)}
+    if(t>=total){K.A=A1;K.tau=Tend}
+    kFrame();if(t<total)K.raf=requestAnimationFrame(tick)};
+  K.raf=requestAnimationFrame(tick)}
+function popTo(changed){if(!changed){$("#kitems").querySelectorAll(".dot").forEach(d=>d.classList.toggle("sel",!!S.sel&&+d.dataset.b===S.sel[0]&&+d.dataset.k===S.sel[1]));$(".sheet").outerHTML=sheet(true);bindSheet();return}
+  const o=$("#oppT"),cm=comp(S.fam);if(o){o.textContent=short(cm);o.style.fill=FAMCOL[cm]}
+  document.querySelectorAll("#kdial .sector").forEach(s=>s.querySelector("path").setAttribute("fill-opacity",s.dataset.f===S.fam?1:.78));
+  $(".sheet").outerHTML=sheet(true);bindSheet();kPlay(S.rot)}
+function replay(){if(S.m!=="pop"||!$("#key"))return;kPlay(K.A,{turn:false})}
+
+/* ---------- shared detail sheet ---------- */
+function sheet(compact){
+  const f=S.fam,cm=comp(f);
+  const rows=D.brands.map((b,i)=>{const ks=b.tones.map((t,k)=>k).filter(k=>b.tones[k].f===f);const sel=S.sel&&S.sel[0]===i;
+    return`<div class="row${sel?" sel":""}"><b>${esc(b.short)}</b><div>${ks.length?ks.map(k=>`<span class="tag" style="background:${FAMCOL[f]}">${esc(b.tones[k].s)}</span>${esc(b.tones[k].l)}`).join("<br>"):'<span class="note">No code in this family</span>'}</div></div>`}).join("");
+  const H=$("#view").clientHeight-TOPH(),h=Math.round(S.sheetH==null?AUTO:S.sheetH);
+  return`<div class="sheet" style="height:${Math.min(h,H)}px"><div class="grabbar" title="Drag up for more detail"><div class="grab"></div><span class="hint">${h>AUTO+40?"Drag down to close":"Drag up for every brand"}</span></div><h2>${esc(D.fam[f].name)}</h2><p class="opp">Opposite: <b style="color:${FAMCOL[cm]}">${esc(short(cm))}</b>, each neutralises the other.</p>${compact?"":rows}${compact?`<p class="note">${S.sel?`${esc(D.brands[S.sel[0]].short)} ${esc(D.brands[S.sel[0]].tones[S.sel[1]].s)} = ${esc(D.brands[S.sel[0]].tones[S.sel[1]].l)}`:"Tap a code in the wedge for its name."}</p>${rows}`:""}</div>`;
+}
+
+/* ---------- control ---------- */
+function pick(f,sel){const changed=f!==S.fam;S.fam=f;S.sel=sel||null;S.rot=tr(f,S.rot);
+  if(S.m==="clip"&&$("#wA")){turnA();const sh=$(".sheet");sh.outerHTML=sheet();bindSheet();}
+  else if(S.m==="pop"&&$("#key"))popTo(changed);else render()}
+function render(){
+  document.querySelectorAll("[data-m]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.m===S.m));
+  sliders();
+  cancelAnimationFrame(K.raf);
+  $("#view").innerHTML=S.m==="clip"?viewA():viewB();(S.m==="clip"?bindA:bindB)();bindSheet();
+  if(S.m==="pop"){K.tau=0;kFrame();kPlay(K.A,{turn:false})}
+}
+const SL={clip:[["zoom","Overflow",100,200,"%"],["vposA","Vertical position",-400,400,"px"]],
+  pop:[["#","Shape"],["spread","Wedge spread",30,110,"°"],["dial","Dial size",100,320,"px"],["len","Wedge length",100,460,"px"],["vposB","Vertical position",-400,400,"px"],
+    ["#","Timing","replay"],["tRet","Retract",0,1000,"ms"],["tRot","Turn",0,2000,"ms"],["ov","Grow overlap",0,100,"%"],["fan","Fan open",0,1200,"ms"],["step","Ring step",0,500,"ms"],["grow","Ring grow",0,1200,"ms"],["slow","Slow motion",1,8,"×"]]};
+const TIMING=new Set(["tRet","tRot","ov","fan","step","grow","slow"]);
+const DEF={zoom:160,vposA:0,spread:52,dial:190,len:225,vposB:0,tRet:240,tRot:650,ov:25,fan:320,step:95,grow:300,slow:1};
+Object.assign(S,DEF);
+const fmt=(v,u,k)=>(k==="vposA"||k==="vposB")&&v>0?"+"+v+u:v+u;
+function sliders(){const box=$("#sliders");
+  box.innerHTML=SL[S.m].map(([k,l,a,b,u])=>k==="#"?`<div class="kgrp"><span>${l}</span>${a==="replay"?'<button class="reset" id="replay">Replay ▶</button>':""}</div>`:`<label class="tune"><span>${l}</span><input type="range" data-k="${k}" min="${a}" max="${b}" value="${S[k]}"><span>${fmt(S[k],u,k)}</span></label>`).join("");
+  const rp=$("#replay");if(rp)rp.onclick=replay;
+  box.querySelectorAll("input").forEach(i=>i.oninput=()=>{const k=i.dataset.k,u=SL[S.m].find(x=>x[0]===k)[4];S[k]=+i.value;i.nextElementSibling.textContent=fmt(S[k],u,k);if(!TIMING.has(k))draw()})}
+let raf;function draw(){cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{cancelAnimationFrame(K.raf);$("#view").innerHTML=S.m==="clip"?viewA():viewB();(S.m==="clip"?bindA:bindB)();bindSheet();if(S.m==="pop"){K.tau=kEnd();kFrame()}})}
+let AUTO=160;
+const TOPH=()=>$(".top").offsetHeight;
+function bindSheet(){const sh=$(".sheet"),g=sh&&sh.querySelector(".grabbar");if(!g)return;
+  let y0=null,h0,moved;
+  g.onpointerdown=e=>{y0=e.clientY;h0=sh.offsetHeight;moved=false;try{g.setPointerCapture(e.pointerId)}catch(_){}sh.classList.add("drag")};
+  g.onpointermove=e=>{if(y0==null)return;const d=y0-e.clientY;if(Math.abs(d)>3)moved=true;sh.style.height=Math.max(60,Math.min($("#view").clientHeight-TOPH(),h0+d))+"px"};
+  g.onpointerup=g.onpointercancel=()=>{if(y0==null)return;sh.classList.remove("drag");const H=$("#view").clientHeight-TOPH(),h=sh.offsetHeight,open=Math.round(H*.86);
+    let tgt;if(!moved)tgt=h>AUTO+40?AUTO:open;else tgt=Math.abs(h-AUTO)<Math.abs(h-open)?AUTO:open;
+    S.sheetH=tgt===AUTO?null:tgt;y0=null;sh.style.height=tgt+"px";sh.querySelector(".hint").textContent=tgt>AUTO+40?"Drag down to close":"Drag up for every brand";if(tgt===AUTO)sh.scrollTop=0};
+}
+document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{S.m=b.dataset.m;render()});
+const FACT={...DEF};const LSK="rosetta-tonelab-defaults-v2";
+try{const v=JSON.parse(localStorage.getItem(LSK)||"null");if(v){Object.keys(DEF).forEach(k=>{if(typeof v[k]==="number")DEF[k]=S[k]=v[k]});if(v.m==="clip"||v.m==="pop")S.m=v.m}}catch(_){}
+function msg(t){$("#savedMsg").textContent=t;clearTimeout(msg.t);msg.t=setTimeout(()=>$("#savedMsg").textContent="",2500)}
+$("#saveDef").onclick=()=>{Object.keys(DEF).forEach(k=>DEF[k]=S[k]);try{localStorage.setItem(LSK,JSON.stringify({...DEF,m:S.m}));msg("Saved as default")}catch(_){msg("Couldn't save in this browser")}};
+$("#copySet").onclick=async()=>{const o={};Object.keys(DEF).forEach(k=>o[k]=S[k]);const t=JSON.stringify(o);let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(_){}const n=$("#setOut");n.hidden=false;n.value=t;n.select();msg(ok?"Copied. Paste into the chat":"Select and copy the text below")};
+$("#reset").onclick=()=>{SL[S.m].forEach(x=>{if(x[0]!=="#")S[x[0]]=DEF[x[0]]});S.sheetH=null;render();msg("Back to your default")};
+$("#factory").onclick=()=>{SL[S.m].forEach(x=>{if(x[0]!=="#")S[x[0]]=FACT[x[0]]});S.sheetH=null;render();msg("Original settings")};
+let rt;addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(render,150)});
+render();
+</script>
+
+</body>
+</html>

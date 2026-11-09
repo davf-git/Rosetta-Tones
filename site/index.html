@@ -1,0 +1,1027 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Rosetta Tone Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: a colour-bar instrument sized to one tablet screen. Fixed header, one working surface that scrolls inside itself, tap any code for a bottom sheet. The tone wheel rotates so the chosen family sits at 6 o'clock. */
+:root{
+  --bg:#eceeed; --panel:#f8f9f8; --ink:#1b2023; --muted:#5d666b; --line:#cfd5d4; --accent:#5a3654; --warn:#a2461c; --warn-bg:#f6e3d8; --shade:#d9dedd; --hi:#ece0e9; --good:#2f7a55; --bad:#b23a3a; --amber:#c98a12;
+  --f-display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-code:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#15191b; --panel:#1d2225; --ink:#e7ebea; --muted:#9aa4a8; --line:#323a3e; --accent:#c99bbf; --warn:#f0a57e; --warn-bg:#3a2419; --shade:#0f1214; --hi:#33252f; --good:#3f9a6e; --bad:#c45454; --amber:#e0a63a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#15191b; --panel:#1d2225; --ink:#e7ebea; --muted:#9aa4a8; --line:#323a3e; --accent:#c99bbf; --warn:#f0a57e; --warn-bg:#3a2419; --shade:#0f1214; --hi:#33252f; --good:#3f9a6e; --bad:#c45454; --amber:#e0a63a; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+body.framed{background:var(--shade);overflow:auto;height:auto;min-height:100%}
+.app{height:100%;display:flex;flex-direction:column;position:relative;background:var(--bg);overflow:hidden}
+body.framed .app{width:1180px;height:820px;margin:28px auto 40px;border-radius:22px;border:1px solid var(--line);box-shadow:0 18px 50px rgba(0,0,0,.18)}
+.framecap{display:none;text-align:center;font:500 12px var(--f-code);color:var(--muted);padding-top:14px}
+body.framed .framecap{display:block}
+body.framed.phone .app{width:390px;height:min(844px,calc(100vh - 96px));border-radius:44px;border:10px solid #141110;box-shadow:0 24px 60px -18px rgba(0,0,0,.45);margin:14px auto 30px}
+.devbar{position:fixed;right:14px;bottom:14px;z-index:60;display:flex;align-items:center;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:0 4px 16px rgba(0,0,0,.14);font:500 12px var(--f-body)}
+.devbar[hidden]{display:none}.devbar span{color:var(--muted);padding:0 8px 0 10px}
+.devbar button{border:0;background:transparent;color:var(--ink);font:inherit;padding:5px 11px;border-radius:999px;cursor:pointer}
+.devbar button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.navscroll{display:contents}
+.app.nar header .row:first-child{flex-wrap:wrap;gap:8px 10px;padding-block:8px}
+.app.nar header .row:first-child>h1{flex:1;font-size:18px}
+.app.nar .spacer{display:none}
+.app.nar .navscroll{display:flex;order:3;flex:1 1 100%;gap:8px;overflow-x:auto;scrollbar-width:none;margin-inline:-16px;padding-inline:16px}
+.app.nar .navscroll::-webkit-scrollbar,.app.nar #filterRow::-webkit-scrollbar{display:none}
+.app.nar .navscroll>*{flex:none}
+.app.nar .seg button{white-space:nowrap;padding:7px 11px}
+.app.nar #filterRow{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:8px}
+.app.nar #filterRow>*{flex:none}.app.nar #filterRow .chips{flex-wrap:nowrap}
+.app.nar .savedwrap{grid-template-columns:minmax(0,1fr)}
+.app.nar .xres{grid-template-columns:minmax(0,1fr)}.app.nar .xarrow{transform:rotate(90deg)}
+.app.nar .famtabs{display:flex;overflow-x:auto;gap:6px;padding-bottom:8px}.app.nar .chart{min-width:0}
+.app.nar .sheet .wrap{grid-template-columns:minmax(0,1fr)}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body.framed .wrap{padding-left:20px;padding-right:20px}
+header{flex:none;background:var(--panel);border-bottom:1px solid var(--line)}
+header .row{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding-block:9px}
+header .row+.row{border-top:1px solid var(--line);padding-block:7px}
+h1{font-family:var(--f-display);font-weight:700;font-size:22px;margin:0;letter-spacing:-.01em}
+h2{font-family:var(--f-display);font-weight:700;font-size:22px;margin:0 0 4px;text-wrap:balance}
+h3{font-family:var(--f-display);font-weight:500;font-size:17px;margin:0 0 6px}
+.seg{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--ink);font:500 13.5px var(--f-body);padding:7px 12px;cursor:pointer}
+header .row:first-child{flex-wrap:nowrap}header .row:first-child>*{flex:none}header h1{font-size:20px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.spacer{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;font:500 13px var(--f-body);padding:5px 11px;cursor:pointer;display:inline-flex;gap:6px;align-items:center;text-decoration:none}
+.chip[aria-pressed="true"]{border-color:var(--ink);color:var(--ink);background:var(--bg)}
+.chip .k{font:600 11px var(--f-code);min-width:18px;height:18px;border-radius:9px;display:inline-grid;place-items:center;background:var(--line);color:var(--ink);padding:0 3px}
+.chip[aria-pressed="true"] .k{background:var(--ink);color:var(--panel)}
+.chip small{font-size:11px;color:var(--muted)}
+.lbl{font:600 10.5px var(--f-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{flex:1;min-height:0;overflow:auto;padding-block:14px 40px}
+main.fit{overflow:hidden;padding-block:12px}
+.note{font-size:13px;color:var(--muted);max-width:70ch;margin:4px 0}
+.warn{background:var(--warn-bg);color:var(--warn);border-radius:var(--r);padding:8px 12px;font-size:13px}
+code,.code{font-family:var(--f-code)}
+.mini{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-3px;margin-right:5px;box-shadow:inset 0 0 0 1px rgba(127,127,127,.3)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;min-width:0}
+.scroll{overflow-x:auto;max-width:100%}
+table{border-collapse:collapse;font-size:13.5px;width:100%}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 10.5px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+td.num{font-family:var(--f-code);font-variant-numeric:tabular-nums}
+tr.clash td:first-child{color:var(--warn);font-weight:600}
+.fam{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.fam i{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+/* wheel */
+.wheelgrid{display:grid;gap:18px;align-items:start}
+.wheelgrid.wide{height:100%}
+.wheelbox svg{display:block;width:100%;height:auto}
+.wheelcol{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:0}.wheelgrid.wide .wheelcol{height:100%}.wheelgrid.wide .wheelbox{flex:1;min-height:0}
+.wheelgrid.wide .wheelbox{display:flex;align-items:flex-start;justify-content:center}.wheelgrid.wide .wheelbox svg{height:100%;width:auto;max-width:100%;max-height:100%;margin:0 auto}
+.wbar{display:flex;gap:8px;flex-wrap:wrap}
+.btabs{margin:6px 0 12px;display:inline-flex}
+.wglist{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+.wgh,.wgl>summary{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1.2fr) minmax(0,1fr) minmax(0,1.4fr);gap:10px;padding:8px 12px;align-items:baseline}
+.wgh{font:600 11px var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
+.wgl{border-top:1px solid var(--line)}.wgl:first-of-type{border-top:0}
+.wgl>summary{cursor:pointer;list-style:none}.wgl>summary::-webkit-details-marker{display:none}.wgl>summary:hover,.wgl[open]>summary{background:var(--hi)}
+.wn{font-weight:600}.wn::before{content:"▸ ";color:var(--muted)}.wgl[open] .wn::before{content:"▾ "}.wt,.wtm{color:var(--muted);font-size:13px}
+.wgd{padding:4px 14px 12px 26px}.wgd dl,.wgc dl{display:grid;grid-template-columns:110px minmax(0,1fr);gap:4px 12px;margin:8px 0}.wgd dt,.wgc dt{color:var(--muted);font-size:13px}.wgd dd,.wgc dd{margin:0}
+.wgt td,.wgt th{padding:4px 8px;border-bottom:1px solid var(--line);text-align:left}.wgt td.code{font-family:var(--f-code)}
+.app.nar .wgh{display:none}.app.nar .wgl>summary{grid-template-columns:minmax(0,1fr) auto;gap:2px 10px}.app.nar .wt{grid-column:1/-1;order:3}.app.nar .wtm{grid-column:1/-1;order:4}.app.nar .btabs{display:flex;overflow-x:auto;max-width:100%}.app.nar .btabs button{white-space:nowrap}.app.nar .wgd dl,.app.nar .wgc dl{grid-template-columns:minmax(0,1fr)}
+.train.tgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,380px);gap:18px;max-width:1120px;margin:0 auto;align-items:start}
+.app.nar .train.tgrid,.tgrid.one{grid-template-columns:minmax(0,1fr)}
+.tside{position:sticky;top:0}.tside h3{margin:10px 0 4px}.tside h3:first-child{margin-top:0}
+.tkind{font:600 11px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 4px}
+.ptab,.ctab{width:100%;border-collapse:collapse;font-size:13px}.ptab td,.ctab td,.ctab th{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}.ctab th{font-weight:600;font-size:11.5px;color:var(--muted)}.ptab td.num,.ctab .num{text-align:right;font-family:var(--f-code);white-space:nowrap}
+.ctab tr.me td{background:var(--hi)}
+.pbar{display:block;width:100%;min-width:60px;height:8px;border-radius:4px;background:var(--line);overflow:hidden}.pbar i{display:block;height:100%}
+.ptip{font-size:13px;margin:8px 0 0}
+.miss{list-style:none;margin:0;padding:0;font-size:12.5px}.miss li{border-bottom:1px solid var(--line);padding:5px 0}.miss .mq{display:block}.miss .ma{display:block;color:var(--muted)}
+.tlv button{white-space:nowrap}
+.lvrow{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:3px;max-width:460px}
+.lvc{border:0;padding:0;background:none;cursor:pointer;border-radius:6px}.lvc[aria-disabled="true"]{cursor:default;opacity:.75}
+.lvsw{display:flex;align-items:flex-end;justify-content:center;height:34px;border-radius:6px;font:600 12px var(--f-code);padding-bottom:3px;box-sizing:border-box;box-shadow:inset 0 0 0 1px rgba(127,127,127,.25)}
+.lvc.on .lvsw{outline:2.5px solid var(--ink);outline-offset:1px}
+.lvcap{margin:4px 0 0;max-width:460px}
+.lvtab tr.go{cursor:pointer}.lvtab tr.go:hover td,.lvtab tr.on td{background:var(--hi)}
+.wstyle{display:inline-flex;align-self:flex-start;border:1px solid var(--line);border-radius:999px;overflow:hidden}.wstyle button{border:0;background:transparent;color:var(--ink);font:500 12.5px var(--f-body);padding:5px 12px;cursor:pointer}.wstyle button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.keybox .kl{font:600 10.5px var(--f-body);fill:#fff;letter-spacing:.04em;pointer-events:none}.keybox .kname{font:700 15px var(--f-body);letter-spacing:.14em;fill:#fff}.keybox .nocode{font:500 12px var(--f-body);fill:var(--muted)}
+.wl{pointer-events:none}.wl path{fill:var(--ink);fill-opacity:.94;stroke:var(--panel);stroke-width:1.5}.wl.line path{fill:var(--accent)}.keybox .wl text{fill:var(--panel);font:600 12px var(--f-body)}
+.wheel text{font-family:var(--f-code)}
+#rot,.up{transition:transform .65s cubic-bezier(.3,.7,.2,1)}
+.up,.tan{transform-box:fill-box;transform-origin:center}
+@media (prefers-reduced-motion:reduce){#rot,.up,.ringlab{transition:none}}
+.sector{cursor:pointer;transition:fill-opacity .3s}
+.dot{cursor:pointer;transition:opacity .3s}
+.dot rect{stroke:var(--panel);stroke-width:1.5}
+.dot text{font-size:13px;font-weight:600;fill:#fff}
+.dot.dim{opacity:.42}
+.seclab{cursor:pointer;font:700 14px var(--f-body);letter-spacing:.12em;fill:#fff}
+#cDisk{transition:fill .4s}
+.dot.sel{opacity:1}.dot.sel rect{stroke:var(--ink);stroke-width:3.5}
+.famrow.focus{background:var(--hi);border-radius:var(--r);margin-inline:-8px;padding-inline:8px}
+.tag.focus{outline:2.5px solid var(--ink);outline-offset:1px}
+.why{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}.why summary{cursor:pointer;font-size:13px;color:var(--muted)}
+.ringlab{transition:transform .65s cubic-bezier(.3,.7,.2,1);pointer-events:none}.ringlab path{fill:var(--ink);stroke:var(--panel);stroke-width:1.5;fill-opacity:.94}.ringlab.line path{fill:var(--accent)}
+td.cl{cursor:pointer}td.cl:hover{background:var(--hi)}td.focus{background:var(--hi);box-shadow:inset 0 0 0 2px var(--ink)}.ringlab.multi{cursor:pointer}.ringlab.line rect{fill:var(--accent)}
+.ringlab text{fill:var(--panel);font:600 12.5px var(--f-body)}
+.side{display:flex;flex-direction:column;gap:10px;min-width:0;min-height:0}
+.wheelgrid.wide .side{height:100%}
+.sidebody{overflow:auto;min-height:0;flex:1}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.nlist{display:grid;margin-top:6px}
+.nrow{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;border-top:1px solid var(--line);padding:8px 6px;cursor:pointer;border-radius:6px}
+.nrow.lvrow{grid-template-columns:24px auto minmax(0,1fr)}
+.nrow:hover{background:var(--hi)}.nrow.on{background:var(--hi);box-shadow:inset 3px 0 0 var(--accent)}
+.nsw{width:26px;height:26px;border-radius:6px;box-shadow:inset 0 0 0 1px rgba(127,127,127,.3)}
+.nlv{font:600 15px var(--f-code);text-align:right;padding-top:3px}
+.ncodes{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:4px;font-size:12.5px}
+.ncode{display:inline-flex;gap:4px;align-items:center}.ncode .tag{margin:0}
+.famlist{display:grid;gap:0;margin-top:6px}
+.famrow{display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px;align-items:baseline;border-top:1px solid var(--line);padding-block:8px}
+.famrow b{font-weight:600}
+.tag{font:600 13px var(--f-code);color:#fff;border-radius:11px;padding:1px 8px;margin:0 6px 3px 0;display:inline-block}
+.lines{font-size:12.5px;color:var(--muted);margin-top:2px}
+.lines span{white-space:nowrap}
+.comp{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13.5px;margin:6px 0 8px}
+.pick{display:flex;flex-wrap:wrap;gap:5px}
+.pick .chip{padding:3px 9px;font-size:12px}
+/* grid */
+.chart{display:grid;gap:2px;min-width:900px}
+.chart .hd{font:600 11px var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 4px;border-bottom:3px solid;position:sticky;top:0;background:var(--bg);z-index:2}
+.gridpage{display:flex;flex-direction:column;height:100%;min-height:0}
+.gridwrap{flex:1;min-height:0;overflow:auto;margin-top:10px}
+.chart .lv{position:sticky;left:0;background:var(--bg);z-index:1}
+.chart .hd:first-child{left:0;z-index:3}
+.chart .lv{font-family:var(--f-code);font-size:12px;padding:6px 4px;color:var(--muted);border-top:1px solid var(--line)}
+.chart .lv b{display:block;font-size:20px;color:var(--ink);font-weight:500}
+.cell{border-top:1px solid var(--line);padding:4px 2px;display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;min-height:52px}
+.sw{border:0;padding:0;background:none;cursor:pointer;width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--ink)}
+.sw span.s{width:100%;height:34px;border-radius:4px;box-shadow:inset 0 0 0 1px rgba(127,127,127,.25);position:relative}
+.sw span.s em{position:absolute;left:3px;top:1px;font:600 10px var(--f-code);font-style:normal;color:#fff;text-shadow:0 0 2px #000}
+.sw span.c{font:500 10.5px var(--f-code);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.sw:hover span.s{outline:2px solid var(--accent)}
+.famtabs{display:none}
+.cell{flex-direction:column;flex-wrap:nowrap;gap:5px}
+.lgrp{display:flex;flex-direction:column;gap:2px;min-width:0}
+.lh{font:500 10px var(--f-body);color:var(--muted);letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lh b{font-family:var(--f-code);color:var(--ink)}
+.lchips{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:6px 5px}
+.swrap{min-width:0}.sibs{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}.pchips .swrap{width:64px}
+.bgrp{display:inline-flex}
+.bgrp.multi .bchip{border-top-right-radius:0;border-bottom-right-radius:0;border-right:0}
+.dd{border-top-left-radius:0;border-bottom-left-radius:0;padding:5px 9px;font-family:var(--f-code);font-size:12px;color:var(--ink)}
+.pop{position:absolute;z-index:30;width:270px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.18);padding:12px 14px}
+.lrow{display:flex;gap:8px;align-items:baseline;padding:5px 0;font-size:14px;cursor:pointer;border-top:1px solid var(--line)}
+.lrow small{color:var(--muted);font-size:11.5px;margin-left:auto;white-space:nowrap}
+.lrow input{accent-color:var(--ink)}
+.light{display:flex;gap:12px;align-items:flex-start;padding:10px 14px;border-radius:var(--r);border:1px solid;font-size:14px}
+.light .lamp{width:16px;height:16px;border-radius:50%;flex:none;margin-top:2px;box-shadow:0 0 0 3px var(--panel)}
+.light .chip{margin-top:6px;color:var(--ink);border-color:var(--ink)}
+.light.good{border-color:var(--good);background:color-mix(in srgb,var(--good) 10%,var(--panel))}.light.good .lamp{background:var(--good)}
+.light.fair{border-color:var(--amber);background:color-mix(in srgb,var(--amber) 14%,var(--panel))}.light.fair .lamp{background:var(--amber)}
+.light.poor{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,var(--panel))}.light.poor .lamp{background:var(--bad)}
+.lbl.tier{display:inline-flex;align-items:center;gap:6px}.lbl.tier::before{content:"";width:9px;height:9px;border-radius:50%}
+.lbl.tier.good::before{background:var(--good)}.lbl.tier.fair::before{background:var(--amber)}.lbl.tier.poor::before{background:var(--bad)}
+.savedwrap{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:760px){.savedwrap{grid-template-columns:minmax(0,1fr)}}
+.plistcol{display:flex;flex-direction:column;gap:8px}
+.plist{display:grid;gap:3px;text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:10px 12px;cursor:pointer;color:var(--ink);font:inherit}
+.plist.sel{border-color:var(--ink);box-shadow:inset 3px 0 0 var(--accent)}
+.pl-name{font:600 15px var(--f-body)}.pl-meta{font-size:12px;color:var(--muted)}
+.pl-sw{display:flex;gap:3px}.pl-sw i{width:16px;height:12px;border-radius:2px;box-shadow:inset 0 0 0 1px rgba(127,127,127,.3)}
+.pdetail{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+.pgrp{display:flex;flex-direction:column;gap:4px}
+.prow{display:grid;grid-template-columns:44px 90px minmax(0,1fr) auto;gap:10px;align-items:center;border-top:1px solid var(--line);padding-top:6px}
+.plink{border:0;background:none;padding:0;font:500 15px var(--f-code);color:var(--accent);text-align:left;cursor:pointer;text-decoration:underline}
+.rm2{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;font:500 12px var(--f-body);padding:3px 10px;cursor:pointer}
+.collect{display:flex;align-items:center;gap:2px;border-left:1px solid var(--line);padding-left:10px;font:500 13px var(--f-body);color:var(--muted)}
+.savedseg.on .collect{background:var(--hi);color:var(--ink)}
+.collect select{font:500 13px var(--f-body);color:var(--ink);background:transparent;border:0;padding:5px 4px;max-width:150px}
+.addb{position:absolute;right:-4px;top:-6px;width:22px;height:22px;z-index:1;border-radius:50%;background:var(--panel);color:var(--ink);border:1.5px solid var(--ink);font:700 13px/17px var(--f-body);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.25);cursor:pointer;text-shadow:none}
+.addb.on{background:#d1157a;border-color:#fff;color:#fff;box-shadow:0 0 0 1.5px #d1157a,0 1px 4px rgba(0,0,0,.35)}
+@media (prefers-reduced-motion:no-preference){.addb.bump{animation:addpop .32s cubic-bezier(.3,1.6,.5,1)}@keyframes addpop{0%{transform:scale(.6)}55%{transform:scale(1.35)}100%{transform:scale(1)}}}
+.swrap{position:relative;display:inline-flex}
+.addb{padding:0}
+.toast{position:absolute;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:9px 16px;border-radius:999px;font:500 14px var(--f-body);z-index:40;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.seg2{margin-left:4px}
+.cmp{display:block;margin:0 0 4px 26px;border:0;background:none;color:var(--accent);font:500 12px var(--f-body);padding:0;cursor:pointer;text-decoration:underline}
+.pop{width:300px}
+.xlate{display:flex;flex-direction:column;gap:12px}
+.xbar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+.xside{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.xside select,.xin input{font:15px var(--f-body);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:7px 10px}
+.xswap{font-size:14px;color:var(--ink);border-color:var(--ink)}
+.xin{display:flex;gap:10px;align-items:center;margin-bottom:12px}.xin input{font:500 22px var(--f-code);width:12ch}
+.xres{display:grid;grid-template-columns:minmax(0,220px) 30px minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:640px){.xres{grid-template-columns:minmax(0,1fr)}.xarrow{transform:rotate(90deg)}}
+.xsrc{display:flex;gap:10px;align-items:center}.xcode{font-size:26px}.xsrc .tsw{width:56px;height:40px}
+.xarrow{font:500 26px var(--f-display);color:var(--muted);padding-top:6px}
+.xtier{margin-bottom:8px}.xtier .lbl{display:block;margin-bottom:4px}
+.xgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px}
+.train{display:flex;flex-direction:column;gap:12px;max-width:820px}
+.tmodes{align-self:flex-start}
+.tbar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.tctl{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--muted)}
+.tctl select{font:15px var(--f-body);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:6px 9px}
+.tscore{margin-left:auto;font:500 13px var(--f-code);color:var(--muted);font-variant-numeric:tabular-nums}.tscore b{color:var(--ink);font-size:16px}
+.tprompt{font:500 20px/1.35 var(--f-display);margin:0 0 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;text-wrap:balance}
+.tsw{width:44px;height:30px;border-radius:4px;flex:none;box-shadow:inset 0 0 0 1px rgba(127,127,127,.3)}
+.topts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:8px}
+.topt{font:500 15px var(--f-body);text-align:left;padding:12px 14px;border-radius:var(--r);border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.topt small{font-size:11.5px;color:var(--muted)}
+.topt:hover:not(:disabled){border-color:var(--ink)}
+.topt.right{background:var(--good);border-color:var(--good);color:#fff}.topt.right small{color:#fff}
+.topt.wrong{background:var(--bad);border-color:var(--bad);color:#fff}.topt.wrong small{color:#fff}
+.topt:disabled{cursor:default}
+.tfb{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:14.5px}.tfb p{margin:0 0 10px}
+.tact{display:flex;flex-wrap:wrap;gap:8px}
+.saveto{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.saveto select,.saveto input,.newp input,.pname,.pnote{font:15px var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:6px 9px}
+.newp{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.newp input{flex:1;min-width:0;max-width:420px}
+.ptop{display:flex;gap:10px;align-items:center}.pname{font:600 17px var(--f-display);flex:1;min-width:0}
+.pnote{width:100%;margin-top:8px;resize:vertical;font-size:13.5px}
+.pchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.pitem{position:relative}.rm{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:13px;line-height:1;cursor:pointer;padding:0}
+.pfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+@media (max-width:720px){.famtabs{display:flex;overflow-x:auto;gap:6px;padding-bottom:8px}.chart{min-width:0}}
+/* depth */
+.ladder{display:grid;min-width:760px}
+.ladder > div{border-top:1px solid var(--line);padding:6px;font-size:13px;min-width:0}
+.ladder .h{font:600 11px var(--f-body);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-top:0}
+.ladder .lvn{font-family:var(--f-code);font-size:19px}
+.bar{height:6px;border-radius:3px;background:var(--line);margin-top:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--muted)}
+.diff{color:var(--warn);font-weight:600}
+/* brands */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px;margin-top:14px}
+dl{display:grid;grid-template-columns:110px minmax(0,1fr);gap:4px 10px;margin:8px 0 0;font-size:13.5px}
+dt{color:var(--muted)}dd{margin:0}
+.brandnav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+a{color:var(--accent)}
+/* sheet */
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:20;background:var(--panel);border-top:1px solid var(--line);box-shadow:0 -8px 30px rgba(0,0,0,.18);max-height:72%;overflow:auto;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+.sheet .wrap{padding-block:14px;display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px}
+@media (max-width:520px){.sheet .wrap{grid-template-columns:minmax(0,1fr)}}
+.bigsw{width:120px;height:90px;border-radius:var(--r);box-shadow:inset 0 0 0 1px rgba(127,127,127,.3)}
+.close{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;width:34px;height:34px;cursor:pointer;font-size:17px}
+.sibs{display:flex;flex-wrap:wrap;gap:4px}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(20px);opacity:.6}}}
+</style>
+</head>
+<body>
+
+
+<div class="framecap" id="framecap"></div>
+<div class="devbar" id="devbar" role="group" aria-label="Preview device" hidden><span>Preview</span><button data-dev="ipad">iPad</button><button data-dev="phone">iPhone</button><button data-dev="off">Off</button></div>
+<div class="app" id="app">
+<header>
+  <div class="wrap row">
+    <h1>Rosetta Tone Lab</h1>
+    <div class="navscroll">
+    <div class="seg" role="group" aria-label="View">
+      <button id="v-wheel" data-v="wheel">Tone wheel</button>
+      <button id="v-translate" data-v="translate">Translate</button>
+      <button id="v-grid" data-v="grid">Chip grid</button>
+      <button id="v-depth" data-v="depth">Depth ladder</button>
+      <button id="v-brands" data-v="brands">Brands</button>
+    </div>
+    <div class="seg savedseg" role="group" aria-label="Saved profiles" id="collectBox">
+      <button id="v-saved" data-v="saved">Saved</button>
+      <label class="collect"><span class="sr">Collect shades into</span><span aria-hidden="true">+ to</span><select id="collectSel"></select></label>
+    </div>
+    </div>
+    <span class="spacer"></span>
+    <div class="seg" role="group" aria-label="Training">
+      <button id="v-train" data-v="train">Train</button>
+    </div>
+    <div class="seg" role="group" aria-label="Colour theme">
+      <button id="themeBtn" type="button" aria-label="Switch to dark mode" title="Switch to dark mode">Dark</button>
+    </div>
+  </div>
+  <div class="wrap row" id="filterRow">
+    <span class="lbl">Brands</span><div class="chips" id="brandChips"></div>
+    <span class="lbl" id="typeLbl">Products</span><div class="chips" id="typeChips"></div>
+  </div>
+</header>
+<main class="wrap" id="main"><p class="note">Loading shade data…</p></main>
+<div class="sheet" id="sheet" hidden></div>
+</div>
+
+<script>
+const FAMCOL={red:"#b3322b",copper:"#cf6a26",gold:"#c99a1f",green:"#5d8a4c",ash:"#4f78a6",pearl:"#7570aa",violet:"#6d4790",mahogany:"#7b2948",natural:"#9a8466",brown:"#6b4a33",clear:"#aab0b3"};
+const WHEEL_ORDER=["red","copper","gold","green","ash","pearl","violet","mahogany"];
+const GRID_ORDER=["natural","brown","gold","copper","red","mahogany","violet","pearl","ash","green","clear"];
+const CAT={koleston:"perm",inoa:"perm",majirel:"perm",creative:"perm",blended:"perm",reflect:"perm",extra:"perm",ultra:"perm",dialight:"demi",diacolor:"demi",gloss:"demi",shadeseq:"demi",mixmaster:"add"};
+const CATNAME={perm:"Permanent",demi:"Demi / gloss",add:"Additives"};
+const LV_LABEL=d=>d===0?"Mix":String(d);
+const C=360,R1=300,R0=80;
+let DATA,FAM;
+const S={view:"wheel",brands:new Set(),cats:new Set(["perm","demi","add"]),fam:"violet",gridFam:"natural",brand:null,rot:0,side:"fam",frame:null,focus:null,lines:null,collect:null,openProf:null,wstyle:"key",wmode:"tones",unw:"yellow",lvl:null};
+const LSHORT={inoa:"iNOA",majirel:"Majirel",dialight:"Dia Light",diacolor:"Dia Color",koleston:"Koleston",creative:"creative + lift",gloss:"gloss",mixmaster:"mix master",blended:"Blended",reflect:"Reflect",extra:"Extra Coverage",ultra:"Ultra Blonde",shadeseq:"Shades EQ"};
+const DEFAULT_LINES=["inoa","koleston","creative","blended","shadeseq"];
+const lineOn=l=>S.lines.has(l.id);
+const store={get(k){try{return JSON.parse(localStorage.getItem("rosetta:"+k))}catch(e){return null}},set(k,v){try{localStorage.setItem("rosetta:"+k,JSON.stringify(v))}catch(e){}}};
+const $=s=>document.querySelector(s);
+(function(){const btn=document.getElementById("themeBtn");if(!btn)return;const mq=window.matchMedia?matchMedia("(prefers-color-scheme: dark)"):null;
+const cur=()=>document.documentElement.dataset.theme||(mq&&mq.matches?"dark":"light");
+const paint=()=>{const next=cur()==="dark"?"light":"dark";btn.textContent=next==="dark"?"Dark":"Light";btn.setAttribute("aria-label","Switch to "+next+" mode");btn.title="Switch to "+next+" mode"};
+const saved=store.get("theme");if(saved==="light"||saved==="dark")document.documentElement.dataset.theme=saved;
+btn.addEventListener("click",()=>{const t=cur()==="dark"?"light":"dark";document.documentElement.dataset.theme=t;store.set("theme",t);paint()});
+if(mq&&mq.addEventListener)mq.addEventListener("change",paint);paint()})();
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const famShort=f=>FAM[f].name.split(" /")[0];
+
+fetch("data/rosetta.json").then(r=>r.json()).then(d=>{DATA=d;FAM=d.families;init()}).catch(()=>{$("#main").innerHTML='<p class="warn">The shade data file did not load. Reload the page to try again.</p>'});
+
+function init(){
+  const saved=store.get("state")||{};
+  DATA.brands.forEach(b=>S.brands.add(b.id));
+  if(saved.brands){S.brands=new Set(saved.brands.filter(id=>DATA.brands.some(b=>b.id===id)));if(!S.brands.size)DATA.brands.forEach(b=>S.brands.add(b.id))}
+  if(saved.cats)S.cats=new Set(saved.cats);
+  if(saved.view)S.view=saved.view;
+  if(saved.fam&&FAM[saved.fam])S.fam=saved.fam;
+  if(typeof saved.frame==="boolean")S.frame=saved.frame?"ipad":"off";else if(["ipad","phone","off"].includes(saved.frame))S.frame=saved.frame;if(saved.wstyle==="full"||saved.wstyle==="key")S.wstyle=saved.wstyle;if(saved.wmode==="neut")S.wmode="neut";if(saved.unw&&NP[saved.unw])S.unw=saved.unw;if(saved.lvl&&WUP[saved.lvl])S.lvl=saved.lvl;
+  computeSectors();S.rot=targetRot(S.fam,0);if(S.wmode==="neut"){S.fam=NP[S.unw].n[0];S.rot=rotTo(circMean(NP[S.unw].n),0)}S.lines=new Set(saved.lines||DEFAULT_LINES);DATA.brands.forEach(b=>{if(!b.lines.some(lineOn))S.lines.add(b.lines[0].id)});
+  document.addEventListener("click",e=>{const pop=$("#pop");if(pop&&!pop.hidden&&!e.target.closest("#pop,.dd"))pop.hidden=true});
+  const h=location.hash.slice(1);
+  if(["wheel","grid","depth","brands","saved","train","translate"].includes(h))S.view=h;else if(h.startsWith("b-")){S.view="brands";S.brand=h.slice(2)}
+  document.querySelectorAll(".seg button[data-v]").forEach(b=>b.onclick=()=>{S.view=b.dataset.v;if(S.view!=="brands")S.brand=null;render()});
+  document.querySelectorAll("#devbar [data-dev]").forEach(x=>x.onclick=()=>{S.frame=x.dataset.dev;applyFrame();render()});
+  S.collect=store.get("collect")||null;{const tl=store.get("train-level");if(LEVELS[tl])T.level=tl}applyFrame();render();startDb();startScores();
+}
+function canDev(d){return d==="ipad"?innerWidth>=1240&&innerHeight>=880:d==="phone"?innerWidth>=480&&innerHeight>=620:true}
+function device(){const d=S.frame==null?"ipad":S.frame;return d!=="off"&&canDev(d)?d:"off"}
+function framed(){return device()!=="off"}
+function applyFrame(){const d=device();document.body.classList.toggle("framed",d!=="off");document.body.classList.toggle("phone",d==="phone");
+  const bar=$("#devbar");bar.hidden=!canDev("phone");bar.querySelectorAll("[data-dev]").forEach(x=>{x.setAttribute("aria-pressed",x.dataset.dev===d);x.hidden=!canDev(x.dataset.dev)});
+  $("#framecap").textContent=d==="phone"?"iPhone · 390 × 844 (Safari shows about 390 × 660 once its bars are in view)":"iPad landscape · 1180 × 820 (Safari viewport, about 1180 × 750 once the browser bar is shown)";
+  const app=$("#app");app.classList.toggle("nar",app.clientWidth<640)}
+function save(){store.set("state",{brands:[...S.brands],cats:[...S.cats],view:S.view,fam:S.fam,frame:S.frame,lines:[...S.lines],wstyle:S.wstyle,wmode:S.wmode,unw:S.unw,lvl:S.lvl})}
+const brands=()=>DATA.brands.filter(b=>S.brands.has(b.id));
+function shades(b){const out=[];b.lines.forEach(l=>{if(!S.cats.has(CAT[l.id])||!lineOn(l))return;l.shades.forEach(s=>{if(b.id==="wella"&&s.depth===0&&!S.cats.has("add"))return;out.push({...s,brand:b,line:l})})});return out}
+const famOf=s=>s.fams[0];
+function symFor(b,k){const t=b.tone_key.tones[k];if(b.id==="loreal")return t.digit+" "+t.letter;if(b.tone_key.system==="letters")return t.letter;return t.digit}
+
+function renderFilters(){
+  $("#brandChips").innerHTML=DATA.brands.map(b=>{const on=b.lines.filter(lineOn).length,multi=b.lines.length>1;
+    return`<span class="bgrp${multi?" multi":""}"><button class="chip bchip" id="bc-${b.id}" aria-pressed="${S.brands.has(b.id)}" data-b="${b.id}"><span class="k">${b.short[0]}</span>${esc(b.short)}</button>${multi?`<button class="chip dd" data-dd="${b.id}" aria-expanded="false" aria-label="Choose ${esc(b.short)} product lines">${on}/${b.lines.length} ▾</button>`:""}</span>`}).join("")+`<div class="pop" id="pop" hidden></div>`;
+  $("#brandChips").querySelectorAll(".bchip").forEach(x=>x.onclick=()=>{const id=x.dataset.b;if(S.brands.has(id)){if(S.brands.size>1)S.brands.delete(id)}else S.brands.add(id);render()});
+  $("#brandChips").querySelectorAll(".dd").forEach(x=>x.onclick=e=>{e.stopPropagation();openLines(x)});
+  $("#filterRow").hidden=!["wheel","grid","depth"].includes(S.view);
+  const showT=S.view==="grid";$("#typeLbl").hidden=!showT;$("#typeChips").hidden=!showT;
+  $("#typeChips").innerHTML=Object.entries(CATNAME).map(([k,v])=>`<button class="chip" id="tc-${k}" aria-pressed="${S.cats.has(k)}" data-c="${k}">${v}</button>`).join("");
+  $("#typeChips").querySelectorAll("button").forEach(x=>x.onclick=()=>{const c=x.dataset.c;if(S.cats.has(c)){if(S.cats.size>1)S.cats.delete(c)}else S.cats.add(c);render()});
+  document.querySelectorAll(".seg button[data-v]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===S.view));
+}
+function openLines(btn){const b=DATA.brands.find(x=>x.id===btn.dataset.dd),pop=$("#pop");
+  if(!pop.hidden&&pop.dataset.b===b.id){pop.hidden=true;return}
+  pop.dataset.b=b.id;pop.hidden=false;
+  pop.innerHTML=`<p class="lbl" style="margin:0 0 6px">${esc(b.name)} lines</p>`+b.lines.map(l=>`<label class="lrow"><input type="checkbox" id="ln-${l.id}" data-l="${l.id}" ${lineOn(l)?"checked":""}> <span>${esc(LSHORT[l.id]||l.name)}</span> <small>${esc(l.type.split(",")[0])} · ${l.shades.length}</small></label><button class="cmp" data-cmp="${l.id}">Compare with similar lines in every brand</button>`).join("")+`<p class="note" style="margin:6px 0 0">Each line switched on gets its own ring on the tone wheel.</p>`;
+  const r=btn.getBoundingClientRect(),a=$("#app").getBoundingClientRect();pop.style.left=Math.max(8,Math.min(r.left-a.left,a.width-312))+"px";pop.style.top=(r.bottom-a.top+6)+"px";
+  pop.querySelectorAll("[data-cmp]").forEach(x=>x.onclick=()=>{const lid=x.dataset.cmp,g=COMP[lid];
+    DATA.brands.forEach(bb=>{if(bb.lines.length<2)return;const pick=bb.id===b.id?[lid]:bb.lines.filter(l=>COMP[l.id]===g).map(l=>l.id);const use=pick.length?pick:[bb.lines[0].id];bb.lines.forEach(l=>S.lines.delete(l.id));use.forEach(id=>S.lines.add(id))});
+    pop.hidden=true;render()});
+  pop.querySelectorAll("input").forEach(i=>i.onchange=()=>{const id=i.dataset.l;if(i.checked)S.lines.add(id);else{if(b.lines.filter(lineOn).length>1)S.lines.delete(id);else i.checked=true}
+    const keep=b.id;render();const nb=document.querySelector(`.dd[data-dd="${keep}"]`);if(nb)openLines(nb)});
+}
+function render(){
+  renderFilters();renderCollect();save();
+  const m=$("#main");m.classList.toggle("fit",false);
+  if(S.view==="wheel"){m.innerHTML=wheelView();layoutWheel();if(S.wstyle==="key")keyStart()}
+  else if(S.view==="grid"){m.innerHTML=gridView();m.classList.add("fit")}
+  else if(S.view==="depth")m.innerHTML=depthView();
+  else if(S.view==="saved")m.innerHTML=savedView();
+  else if(S.view==="train")m.innerHTML=trainView();
+  else if(S.view==="translate")m.innerHTML=translateView();
+  else m.innerHTML=brandView();
+  bind();
+}
+
+/* ---------- tone wheel ---------- */
+let MID={},BOUNDS={},RX=[];
+function computeSectors(){WHEEL_ORDER.forEach((f,i)=>{const h=FAM[f].hue,prev=FAM[WHEEL_ORDER[(i+7)%8]].hue,next=FAM[WHEEL_ORDER[(i+1)%8]].hue;
+  const a0=h-((h-prev+360)%360)/2,a1=h+((next-h+360)%360)/2;BOUNDS[f]=[a0,a1];MID[f]=(a0+a1)/2})}
+function pol(r,deg){const a=(deg-90)*Math.PI/180;return[C+r*Math.cos(a),C+r*Math.sin(a)]}
+function arc(r0,r1,a0,a1){const[x0,y0]=pol(r1,a0),[x1,y1]=pol(r1,a1),[x2,y2]=pol(r0,a1),[x3,y3]=pol(r0,a0);const lg=(a1-a0)>180?1:0;return`M${x0},${y0}A${r1},${r1} 0 ${lg} 1 ${x1},${y1}L${x2},${y2}A${r0},${r0} 0 ${lg} 0 ${x3},${y3}Z`}
+function targetRot(f,cur){if(MID[f]==null)return cur;let t=180-MID[f],d=((t-cur)%360+540)%360-180;return cur+d}
+function up(x,y,inner){return`<g transform="translate(${x.toFixed(1)},${y.toFixed(1)})"><g class="up" style="transform:rotate(${-S.rot}deg)">${inner}</g></g>`}
+function rings(){const out=[];brands().forEach(b=>{if(b.lines.length===1){out.push({b,l:null,first:true,n:1});return}const ls=b.lines.filter(lineOn);ls.forEach((l,j)=>out.push({b,l,first:j===0,n:ls.length}))});return out}
+function ringKeys(ring){const keys=Object.keys(ring.b.tone_key.tones);if(!ring.l)return keys;const used=new Set();ring.l.shades.forEach(s=>s.tones.forEach(t=>used.add(t)));return keys.filter(k=>used.has(k))}
+function wheelSvg(){
+  if(!Object.keys(MID).length)computeSectors();
+  const RG=rings(),w=(R1-R0)/RG.length;let g="";RX=RG.map((rg,i)=>({r:R1-w*i-w/2,ext:{}}));
+  WHEEL_ORDER.forEach(f=>{const[a0,a1]=BOUNDS[f];g+=`<path class="sector" data-fam="${f}" d="${arc(R0,R1,a0,a1)}" fill="${FAMCOL[f]}" fill-opacity="${segOn(f)?.34:.12}" stroke="var(--panel)" stroke-width="3"><title>${FAM[f].name}</title></path><path class="sector band" data-fam="${f}" d="${arc(R1+2,R1+42,a0,a1)}" fill="${FAMCOL[f]}" fill-opacity="${segOn(f)?1:isNeut()?.38:.82}" stroke="var(--panel)" stroke-width="3"><title>${FAM[f].name}</title></path>`});
+  RG.forEach((rg,i)=>{const ro=R1-w*i;if(rg.first&&rg.n>1){const n=rg.n;g+=`<path d="${arc(ro-w*n,ro,0,359.99)}" fill="var(--ink)" fill-opacity=".05" pointer-events="none"/>`}
+    g+=`<circle cx="${C}" cy="${C}" r="${ro}" fill="none" stroke="var(--panel)" stroke-width="${rg.first?3:1}" pointer-events="none"/>`});
+  WHEEL_ORDER.forEach(f=>{g+=`<path id="lp-${f}" d="${labelPath(f)}" fill="none"/><text class="seclab" data-fam="${f}"><textPath href="#lp-${f}" startOffset="50%" text-anchor="middle" dominant-baseline="central">${segLabel(f).toUpperCase()}</textPath></text>`});
+  const ph=w>=36?26:22,fs=w>=36?13:12;
+  RG.forEach((rg,i)=>{const b=rg.b,r=R1-w*i-w/2,byFam={};
+    ringKeys(rg).forEach(k=>{const f=b.tone_key.tones[k].fam;(byFam[f]=byFam[f]||[]).push(k)});
+    Object.entries(byFam).forEach(([f,ks])=>{if(MID[f]==null)return;const labs=ks.map(k=>symFor(b,k)),wds=labs.map(l=>Math.max(ph+8,l.length*(fs*.62)+14));
+      const tot=wds.reduce((a,x)=>a+x+4,-4);let off=-tot/2;RX[i].ext[f]=tot/2;
+      ks.forEach((k,j)=>{const ang=MID[f]+(off+wds[j]/2)/r*57.2958;off+=wds[j]+4;const[x,y]=pol(r,ang);
+        const sel=S.focus&&S.focus.b===b.id&&S.focus.k===k;
+        g+=`<g class="dot${(isNeut()?!NP[S.unw].n.includes(f):S.fam!==f)?" dim":""}${sel?" sel":""}" data-fam="${f}" data-b="${b.id}" data-k="${esc(k)}"><g transform="translate(${x.toFixed(1)},${y.toFixed(1)})"><g class="tan" data-ang="${ang.toFixed(2)}" style="transform:rotate(${dotRot(ang)}deg)"><rect x="${-wds[j]/2}" y="${-ph/2}" width="${wds[j]}" height="${ph}" rx="${ph/2}" fill="${FAMCOL[f]}"/><text text-anchor="middle" dominant-baseline="central" style="font-size:${fs}px">${esc(labs[j])}</text></g></g><title>${esc(b.short)}${rg.l?" "+esc(rg.l.name):""} ${esc(labs[j])} = ${esc(b.tone_key.tones[k].label)}</title></g>`})})});
+  let labs="";
+  RG.forEach((rg,i)=>{const txt=rg.l?(rg.first?rg.b.short+" · ":"")+(LSHORT[rg.l.id]||rg.l.name):rg.b.short,len=txt.length*7.2+28;
+    labs+=`<g class="ringlab${rg.l&&!rg.first?" line":""}" id="rl-${i}" style="transform:${ringLabPos(i)}"><path d="M${-len},-11 H-12 L0,0 L-12,11 H${-len} A11,11 0 0 1 ${-len},-11 Z"/><text x="${-(len+12)/2}" text-anchor="middle" dominant-baseline="central">${esc(txt)}</text><title>${esc(rg.b.name)}${rg.l?" "+esc(rg.l.name):""}</title></g>`});
+  const nm=isNeut()?["Use "+NP[S.unw].nn,"removes "+NP[S.unw].u.toLowerCase()]:FAM[S.fam].name.split(" / ");
+  return`<svg viewBox="0 0 720 720" role="img" aria-label="Tone wheel, one ring per brand"><g id="rot" style="transform-box:view-box;transform-origin:${C}px ${C}px;transform:rotate(${S.rot}deg)">${g}</g>
+  <circle id="cDisk" cx="${C}" cy="${C}" r="${R0-3}" fill="${isNeut()?(NP[S.unw].nh||FAMCOL[S.fam]):FAMCOL[S.fam]}" stroke="var(--panel)" stroke-width="3"/>
+  <path d="M${C-10},${C+R1+50} L${C+10},${C+R1+50} L${C},${C+R1+37}Z" fill="var(--ink)"/>
+  <text id="cName" x="${C}" y="${C+2}" text-anchor="middle" style="font:700 ${nm[0].length>11?15:nm[0].length>7?20:24}px var(--f-display);fill:#fff">${esc(nm[0])}</text>
+  <text id="cSub" x="${C}" y="${C+22}" text-anchor="middle" style="font:500 12.5px var(--f-body);fill:#fff;opacity:.85">${esc(nm[1]||"")}</text>${labs}</svg>`;
+}
+function dotRot(ang){const scr=((ang+S.rot)%360+360)%360;return(scr<90||scr>270)?ang:ang-180}
+function ringLabPos(i){const R=RX[i];const ex=Math.max(0,...RX.map(q=>q.ext[S.fam]||0));const x=MID[S.fam]==null?C-14:C-ex-8;return`translate(${x.toFixed(1)}px,${(C+R.r).toFixed(1)}px)`}
+function labelPath(f){const[a0,a1]=BOUNDS[f],r=R1+22,scr=((MID[f]+S.rot)%360+360)%360,top=scr<90||scr>270;
+  const[x0,y0]=pol(r,a0),[x1,y1]=pol(r,a1);const lg=(a1-a0)>180?1:0;
+  return top?`M${x0.toFixed(1)},${y0.toFixed(1)}A${r},${r} 0 ${lg} 1 ${x1.toFixed(1)},${y1.toFixed(1)}`:`M${x1.toFixed(1)},${y1.toFixed(1)}A${r},${r} 0 ${lg} 0 ${x0.toFixed(1)},${y0.toFixed(1)}`}
+function wsToggle(){return`<div class="wbar"><div class="wstyle" role="group" aria-label="Wheel mode"><button data-wm="tones" aria-pressed="${!isNeut()}">Tones</button><button data-wm="neut" aria-pressed="${isNeut()}">Neutralise</button></div><div class="wstyle" role="group" aria-label="Wheel style"><button data-ws="key" aria-pressed="${S.wstyle==="key"}">Keyhole</button><button data-ws="full" aria-pressed="${S.wstyle==="full"}">Full wheel</button></div></div>${isNeut()?`<div id="lvstrip">${lvStrip()}</div>`:""}`}
+function lvStrip(){const L=[10,9,8,7,6,5,4,3,2];
+  const cells=L.map(l=>{const[pg,k]=WUP[l],on=S.lvl===l;return`<button class="lvc${on?" on":""}" data-lv="${l}" ${k?"":'aria-disabled="true"'} title="Level ${l}: ${esc(pg)}${k?" → "+esc(NP[k].nn):", no neutraliser given"}"><span class="lvsw" style="background:${WUPHEX[l]}"><b style="color:${l>=7?"#1b2023":"#fff"}">${l}</b></span></button>`}).join("");
+  const sel=S.lvl&&WUP[S.lvl],cap=sel?(sel[1]?`Lightened to <b>level ${S.lvl}</b>, hair shows <b>${esc(sel[0])}</b>. Neutralise with <b>${esc(NP[sel[1]].nn)}</b>.`:`Level ${S.lvl} shows ${esc(sel[0])}; there is no warm residue to neutralise at this depth.`):"Underlying pigment by level (Wella). Tap a level, or tap the tone to remove on the wheel.";
+  return`<div class="lvrow" role="group" aria-label="Lightened to level">${cells}</div><p class="note lvcap">${cap}</p>`}
+function wheelView(){if(S.wstyle==="key")return`<div class="wheelgrid" id="wg"><div class="wheelcol">${wsToggle()}<div class="wheelbox wheel keybox" id="kbox">${keySvgH()}</div></div><div class="side" id="side">${sideHtml()}</div></div>`;
+  return`<div class="wheelgrid" id="wg"><div class="wheelcol">${wsToggle()}<div class="wheelbox wheel">${wheelSvg()}</div></div><div class="side" id="side">${sideHtml()}</div></div>`}
+function layoutWheel(){
+  const m=$("#main"),wg=$("#wg");if(!wg)return;const cs=getComputedStyle(m);
+  const W=m.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),H=m.clientHeight-24,wide=W>=820&&W/H>1.15;
+  wg.classList.toggle("wide",wide);m.classList.toggle("fit",wide);
+  wg.style.gridTemplateColumns=wide?`${Math.max(360,Math.min(H,W-360))}px minmax(0,1fr)`:"minmax(0,1fr)";
+}
+function complementOf(f){if(MID[f]==null)return null;const t=(MID[f]+180)%360;return WHEEL_ORDER.reduce((a,x)=>{const d=v=>Math.abs(((MID[v]-t)%360+540)%360-180);return d(x)<d(a)?x:a})}
+function sideHtml(){
+  const tabs=`<div class="tabs"><button class="chip" data-side="fam" aria-pressed="${S.side==="fam"}">Tone family</button><button class="chip" data-side="digits" aria-pressed="${S.side==="digits"}">Same digit, different tone</button></div>`;
+  if(isNeut())return`<div class="panel sidebody" id="sidebody">${neutPanel()}</div>`;
+  return tabs+`<div class="panel sidebody" id="sidebody">${S.side==="digits"?clashTable():famPanel()}</div>`;
+}
+function famPanel(){
+  const f=S.fam,B=brands(),comp=complementOf(f);
+  const pick=GRID_ORDER.filter(x=>x!=="clear").map(x=>`<button class="chip" data-fam="${x}" aria-pressed="${x===f}"><span class="mini" style="background:${FAMCOL[x]};margin:0"></span>${famShort(x)}</button>`).join("");
+  const rows=B.map(b=>{const ks=Object.keys(b.tone_key.tones).filter(k=>b.tone_key.tones[k].fam===f);
+    const per=b.lines.filter(lineOn).map(l=>({n:LSHORT[l.id]||l.name,c:l.shades.filter(s=>s.fams[0]===f).length})),tot=per.reduce((a,x)=>a+x.c,0);
+    const focusB=S.focus&&S.focus.b===b.id;
+    const codes=ks.length?ks.map(k=>`<span class="tag${focusB&&S.focus.k===k?" focus":""}" style="background:${FAMCOL[f]}">${esc(symFor(b,k))}</span>${esc(b.tone_key.tones[k].label)}`).join("<br>"):'<span class="note">No tone code in this family</span>';
+    const lines=b.lines.filter(lineOn).length>1?`<div class="lines">${per.filter(x=>x.c).map(x=>`<span>${esc(x.n)} ${x.c}</span>`).join(" · ")||"0 shades"}</div>`:`<div class="lines">${tot} shade${tot===1?"":"s"}</div>`;
+    const ex="";
+    return`<div class="famrow${focusB?" focus":""}" id="fr-${b.id}"><b>${esc(b.short)}</b><div>${codes}${lines}<div class="lines">${tot?`<a href="#grid" data-gofam="${f}">See ${tot} in chip grid</a>`:""}${ex}</div></div></div>`}).join("");
+  return`<h2>${esc(FAM[f].name)}</h2>${comp?`<div class="comp"><span>Opposite on the wheel: <span class="fam"><i style="background:${FAMCOL[comp]}"></i><b>${famShort(comp)}</b></span></span><span class="note" style="margin:0">Each neutralises the other.</span></div>`:`<p class="note">No position on the wheel. Natural and brown tones mix complementary pigments.</p>`}
+  <div class="pick">${pick}</div><div class="famlist">${rows}</div>
+  <details class="why"><summary>Why are the segments different sizes?</summary><p class="note">Each family sits at its place on the colour wheel so that true opposites face each other: gold and violet, copper and blue/ash, red and green. Those six are evenly spaced. Pearl (blue-violet) and mahogany (red-violet) are in-between tones, so they share the violet side of the wheel and get narrower segments. Making all eight equal would push the neutralising pairs out of line.</p></details>`;
+}
+/* Neutralising: unwanted tone -> opposite family, and underlying pigment by level (UP, from the TIGI lightening chart) */
+const UPHEX={"very pale yellow":"#f5ebb8","pale yellow":"#f0dc82","yellow":"#e8c547","yellow/orange":"#e3a63c","orange":"#da812e","orange/red":"#c95d29","red/orange":"#b5472a","red":"#9b3026","dark red":"#6b2520"};
+const UPNEUT={10:["violet"],9:["violet"],8:["violet"],7:["pearl"],6:["ash"],5:["ash","green"],4:["green","ash"],3:["green"],2:["green"]};
+const UNWANTED=[["Yellow (brassy blonde)","#e8c547","violet"],["Yellow-orange","#e3a63c","pearl"],["Orange (brassy brown)","#da812e","ash"],["Red","#b3322b","green"],["Green (e.g. over-ashed or chlorine)","#6f8f4e","red"],["Violet / purple cast","#6d4790","gold"]];
+function codesFor(f){return brands().map(b=>{const ks=Object.keys(b.tone_key.tones).filter(k=>b.tone_key.tones[k].fam===f);return ks.length?`<span class="ncode"><b>${esc(b.short)}</b> ${ks.map(k=>`<span class="tag" style="background:${FAMCOL[f]}">${esc(symFor(b,k))}</span>`).join("")}</span>`:""}).filter(Boolean).join("")||'<span class="note">No code in the selected brands</span>'}
+const famDot=f=>`<span class="fam"><i style="background:${FAMCOL[f]}"></i><b>${famShort(f)}</b></span>`;
+function neutPanel(){const p=NP[S.unw],nf=p.n;
+  const codes=brands().map(b=>{const ks=Object.keys(b.tone_key.tones).filter(k=>nf.includes(b.tone_key.tones[k].fam));
+    return`<div class="famrow"><b>${esc(b.short)}</b><div>${ks.length?ks.map(k=>{const t=b.tone_key.tones[k];return`<span class="tag${S.focus&&S.focus.b===b.id&&S.focus.k===k?" focus":""}" style="background:${FAMCOL[t.fam]}">${esc(symFor(b,k))}</span>${esc(t.label)}`}).join("<br>"):'<span class="note">No code for this in the selected brands</span>'}</div></div>`}).join("");
+  const pick=Object.entries(NP).map(([k,x])=>`<button class="chip" data-unw="${k}" aria-pressed="${k===S.unw}"><span class="mini" style="background:${x.uh};margin:0"></span>${esc(x.u)}</button>`).join("");
+  const lv=Object.keys(WUP).map(Number).sort((a,b)=>b-a).map(l=>{const[pg,k]=WUP[l];return`<tr class="${S.lvl===l?"on":""}${k?" go":""}" ${k?`data-lv="${l}" tabindex="0"`:""}><td class="num">${l}</td><td><span class="fam"><i style="background:${WUPHEX[l]}"></i>${esc(pg)}</span></td><td>${k?esc(NP[k].nn):'<span class="note">none given</span>'}</td></tr>`}).join("");
+  return`<h2>Remove ${esc(p.u)}: use ${esc(p.nn)}</h2>
+  <div class="comp"><span>${nf.map(f=>`<span class="fam"><i style="background:${FAMCOL[f]}"></i><b>${famShort(f)}</b></span>`).join(" + ")}</span><span class="note" style="margin:0">${nf.length>1?`${esc(p.nn)} sits between ${nf.map(famShort).join(" and ")}; codes from both are shown.`:"Opposite on the wheel, so it cancels the unwanted tone."}</span></div>
+  <div class="famlist">${codes}</div>
+  <h3 style="margin-top:12px">Tone to remove</h3><div class="pick">${pick}</div>
+  <h3 style="margin-top:12px">Underlying pigment when lightened (Wella)</h3>
+  <div class="scroll"><table class="lvtab"><thead><tr><th>Level</th><th>Hair shows</th><th>Neutralise with</th></tr></thead><tbody>${lv}</tbody></table></div>
+  <p class="note">Pigment and neutralising tone by level are from the Wella Color Expert workbook (2026), p.63. Other brands' charts differ, mainly at levels 2 to 5. Check the exact shade against the brand's own chart.</p>`}
+function clashTable(){
+  const B=DATA.brands.filter(b=>S.brands.has(b.id)&&b.id!=="redken");
+  const digitOf=(b,k)=>b.id==="matrix"?(b.tone_key.tones[k].digit||"").replace(".",""):k;
+  let rows="";for(let d=0;d<=9;d++){const cells=B.map(b=>{const k=Object.keys(b.tone_key.tones).find(k=>digitOf(b,k)===String(d));if(!k)return{f:null,h:"—"};const t=b.tone_key.tones[k];return{f:t.fam,b:b.id,k,h:`<span class="fam"><i style="background:${FAMCOL[t.fam]}"></i>${esc(t.label)}</span>`}});
+    const fs=new Set(cells.filter(c=>c.f).map(c=>c.f));rows+=`<tr class="${fs.size>1?"clash":""}"><td class="num">${d}${fs.size>1?" ≠":""}</td>${cells.map(c=>c.f?`<td class="cl${S.focus&&S.focus.b===c.b&&S.focus.k===c.k?" focus":""}" data-cf="${c.f}" data-cb="${c.b}" data-ck="${esc(c.k)}" tabindex="0">${c.h}</td>`:`<td>${c.h}</td>`).join("")}</tr>`}
+  return`<h2>Same digit, different tone</h2><p class="note">Tap a cell to turn the wheel to that tone; the table stays open. Rows marked ≠ use the same number for a different colour family. Matrix prints these digits on its tone strip but its shade codes use letters. Redken uses letters only.</p><div class="scroll"><table><thead><tr><th>Digit</th>${B.map(b=>`<th>${esc(b.short)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function refreshSide(){const sd=$("#side");if(sd){sd.innerHTML=sideHtml();bindSide()}const ls=$("#lvstrip");if(ls){ls.innerHTML=lvStrip();bindStrip()}}
+function bindStrip(){document.querySelectorAll("#lvstrip [data-lv]").forEach(x=>x.onclick=()=>pickLevel(+x.dataset.lv))}
+function pickLevel(l){const k=WUP[l][1];S.lvl=l;if(k)setNeut(k,l);else{save();refreshSide()}}
+function setNeut(k,lvl){const prev=S.rot;S.unw=k;S.lvl=lvl===undefined?(S.lvl&&WUP[S.lvl][1]===k?S.lvl:null):lvl;S.fam=NP[k].n[0];S.focus=null;S.rot=rotTo(circMean(NP[k].n),S.rot);save();
+  if(S.view!=="wheel"){render();return}
+  if(S.wstyle==="key"&&$("#key")){keyUpdate();refreshSide();return}
+  turnFullFrom(prev)}
+/* full wheel: re-render at the old angle, then turn to the new one so the move is animated */
+function turnFullFrom(prev){const target=S.rot;S.rot=prev;render();void document.body.offsetWidth;S.rot=target;
+  requestAnimationFrame(()=>{const r=$("#rot");if(!r)return;r.style.transform=`rotate(${S.rot}deg)`;
+    document.querySelectorAll("#rot .up").forEach(u=>u.style.transform=`rotate(${-S.rot}deg)`);
+    document.querySelectorAll("#rot .tan").forEach(u=>u.style.transform=`rotate(${dotRot(+u.dataset.ang)}deg)`);
+    WHEEL_ORDER.forEach(x=>{const lp=$("#lp-"+x);if(lp)lp.setAttribute("d",labelPath(x))});
+    RX.forEach((_,i)=>{const el=$("#rl-"+i);if(el)el.style.transform=ringLabPos(i)})})}
+function setWMode(m){if(m===S.wmode)return;S.wmode=m;S.focus=null;
+  if(m==="neut"){S.fam=NP[S.unw].n[0];S.rot=rotTo(circMean(NP[S.unw].n),S.rot)}else S.rot=targetRot(S.fam,S.rot);
+  save();render()}
+function setFam(f,focus,keepSide){
+  S.fam=f;S.focus=focus||null;save();
+  if(S.view==="wheel"&&S.wstyle==="key"&&$("#key")){S.rot=targetRot(f,S.rot);keySetFam(f);if(!keepSide)S.side="fam";$("#side").innerHTML=sideHtml();bindSide();
+    if(S.focus&&!keepSide){const row=$("#fr-"+S.focus.b);if(row)row.scrollIntoView({block:"nearest",behavior:"smooth"})}return}
+  if(S.view!=="wheel"||!$("#rot")){render();return}
+  S.rot=targetRot(f,S.rot);
+  $("#rot").style.transform=`rotate(${S.rot}deg)`;
+  document.querySelectorAll("#rot .up").forEach(u=>u.style.transform=`rotate(${-S.rot}deg)`);
+  document.querySelectorAll("#rot .tan").forEach(u=>u.style.transform=`rotate(${dotRot(+u.dataset.ang)}deg)`);
+  document.querySelectorAll("#rot .dot").forEach(d=>{d.classList.toggle("dim",d.dataset.fam!==f);d.classList.toggle("sel",!!S.focus&&d.dataset.b===S.focus.b&&d.dataset.k===S.focus.k)});
+  document.querySelectorAll("#rot .sector").forEach(p=>p.setAttribute("fill-opacity",p.classList.contains("band")?(p.dataset.fam===f?1:.82):(p.dataset.fam===f?.34:.12)));
+  const nm=FAM[f].name.split(" / ");const cn=$("#cName");cn.textContent=nm[0];cn.style.fontSize=(nm[0].length>7?20:24)+"px";$("#cSub").textContent=nm[1]||"";$("#cDisk").setAttribute("fill",FAMCOL[f]);WHEEL_ORDER.forEach(x=>{const lp=$("#lp-"+x);if(lp)lp.setAttribute("d",labelPath(x))});
+  RX.forEach((_,i)=>{const el=$("#rl-"+i);if(el)el.style.transform=ringLabPos(i)});
+  if(!keepSide)S.side="fam";$("#side").innerHTML=sideHtml();bindSide();
+  if(S.focus&&!keepSide){const row=$("#fr-"+S.focus.b);if(row)row.scrollIntoView({block:"nearest",behavior:"smooth"})}
+}
+
+/* ---------- keyhole wheel (from the Wheel Lab) ----------
+   A small dial with the target at the bottom; the target segment grows out of the dial's centre into a
+   wedge, one ring per brand line, ending with a name band. Drawn frame by frame so retract, turn and
+   ring-by-ring growth can each be timed. Settings come from the Lab.
+   Two modes: Tones (target = chosen tone family) and Neutralise (target = the neutraliser of an unwanted
+   tone; segments relabelled in colour-theory terms; the unwanted tone sits at the top). */
+const KS={spread:52,dial:190,len:225,tRet:240,tRot:650,ov:25,fan:320,step:95,grow:300};
+const kEaseIO=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2,kEaseO=x=>1-Math.pow(1-x,3),kcl=x=>Math.max(0,Math.min(1,x));
+function kP(cx,cy,r,deg){const a=(deg-90)*Math.PI/180;return[cx+r*Math.cos(a),cy+r*Math.sin(a)]}
+function kArc(cx,cy,r0,r1,a0,a1){const[x0,y0]=kP(cx,cy,r1,a0),[x1,y1]=kP(cx,cy,r1,a1),[x2,y2]=kP(cx,cy,r0,a1),[x3,y3]=kP(cx,cy,r0,a0);const lg=(a1-a0)>180?1:0;return`M${x0.toFixed(1)},${y0.toFixed(1)}A${r1},${r1} 0 ${lg} 1 ${x1.toFixed(1)},${y1.toFixed(1)}L${x2.toFixed(1)},${y2.toFixed(1)}A${r0},${r0} 0 ${lg} 0 ${x3.toFixed(1)},${y3.toFixed(1)}Z`}
+
+/* --- neutralising data. Pairs are standard colour-wheel complements; in-betweens use both families' codes. --- */
+const NNAME={red:"Red",copper:"Orange",gold:"Yellow",green:"Green",ash:"Blue",pearl:"Blue-violet",violet:"Violet",mahogany:"Red-violet"};
+const NP={
+  yellow:{u:"Yellow",uh:"#e8c547",uf:["gold"],n:["violet"],nn:"Violet"},
+  yorange:{u:"Yellow-orange",uh:"#e3a63c",uf:["gold","copper"],n:["pearl"],nn:"Blue-violet"},
+  orange:{u:"Orange",uh:"#da812e",uf:["copper"],n:["ash"],nn:"Blue"},
+  ored:{u:"Orange-red",uh:"#c95d29",uf:["copper","red"],n:["ash","green"],nn:"Blue-green",nh:"#3f8a86"},
+  red:{u:"Red",uh:"#b3322b",uf:["red"],n:["green"],nn:"Green"},
+  green:{u:"Green",uh:"#5d8a4c",uf:["green"],n:["red"],nn:"Red"},
+  blue:{u:"Blue",uh:"#4f78a6",uf:["ash"],n:["copper"],nn:"Orange"},
+  bviolet:{u:"Blue-violet",uh:"#7570aa",uf:["pearl"],n:["gold","copper"],nn:"Yellow-orange",nh:"#dba13a"},
+  violet:{u:"Violet",uh:"#6d4790",uf:["violet"],n:["gold"],nn:"Yellow"},
+  rviolet:{u:"Red-violet",uh:"#7b2948",uf:["mahogany"],n:["gold","green"],nn:"Yellow-green",nh:"#98a63c"}};
+const NDIAL={pearl:"B-Viol",mahogany:"R-Viol"};
+const SEGP={gold:"yellow",copper:"orange",red:"red",green:"green",ash:"blue",pearl:"bviolet",violet:"violet",mahogany:"rviolet"};
+/* Wella underlying pigment by level: Wella Color Expert workbook 2026, p.63 (lightening curve). */
+const WUP={10:["very pale yellow","yellow"],9:["pale yellow","yellow"],8:["yellow","yellow"],7:["orange yellow","yorange"],6:["orange","orange"],5:["red orange","ored"],4:["red","red"],3:["red","red"],2:["red","red"]};
+const WUPHEX={2:"#1f1714",3:"#3b2418",4:"#5a2a1a",5:"#8a3a1c",6:"#b85a1e",7:"#d6862b",8:"#e8b23c",9:"#f0d27a",10:"#f6e9b8"};
+const isNeut=()=>S.wmode==="neut";
+function circMean(fs){let x=0,y=0;fs.forEach(f=>{x+=Math.cos(MID[f]*Math.PI/180);y+=Math.sin(MID[f]*Math.PI/180)});return(Math.atan2(y,x)*180/Math.PI+360)%360}
+/* what the keyhole points at */
+function kTarget(){if(isNeut()){const p=NP[S.unw];return{key:"n:"+S.unw,fams:p.n,ang:circMean(p.n),col:p.nh||FAMCOL[p.n[0]],name:p.nn,on:true}}
+  const f=S.fam;return{key:"f:"+f,fams:[f],ang:MID[f],col:FAMCOL[f],name:famShort(f),on:MID[f]!=null}}
+function rotTo(ang,cur){if(ang==null)return cur;let t=180-ang,d=((t-cur)%360+540)%360-180;return cur+d}
+const segLabel=x=>isNeut()?NNAME[x]:famShort(x);
+function segOn(x){if(!isNeut())return x===S.fam;const p=NP[S.unw];return p.uf.includes(x)||p.n.includes(x)}
+
+const KH={tau:0,A:0,key:null,raf:0,g:null,t:null};
+function kGeoH(){const RG=rings(),N=RG.length,mw=$("#main")?$("#main").clientWidth-32:460,W=Math.round(Math.max(340,Math.min(460,mw))),rD=KS.dial/2,r0=Math.round(rD*.38),cx=W/2,cy=rD+10,band=34;
+  const R=Math.round(Math.max(rD+KS.len,r0+band+N*40)),w=(R-band-r0)/N,rs=[];
+  for(let k=0;k<N;k++)rs.push([r0+k*w,r0+(k+1)*w]);rs.push([r0+N*w,R]);
+  return{RG,N,W,rD,r0,cx,cy,R,band,w,rings:rs,H:Math.ceil(cy+R+14)}}
+const kEndH=()=>Math.max(KS.fan,(KH.g?KH.g.N+1:6)*KS.step+KS.grow);
+const kSecW=f=>BOUNDS[f]?BOUNDS[f][1]-BOUNDS[f][0]:45;
+function keySvgH(){const g=KH.g=kGeoH(),{cx,cy,rD,r0,W,H,RG}=g,t=KH.t=kTarget(),fs=t.fams,col=t.col,neut=isNeut();KH.key=t.key;let dial="",wedge="",items="";
+  WHEEL_ORDER.forEach(x=>{const[a0,a1]=BOUNDS[x],[tx,ty]=kP(cx,cy,(r0+rD)/2,MID[x]),lab=(neut?(NDIAL[x]||NNAME[x]):famShort(x).slice(0,5)).toUpperCase(),on=segOn(x);
+    dial+=`<g class="sector" data-fam="${x}"><path d="${kArc(cx,cy,r0,rD,a0,a1)}" fill="${FAMCOL[x]}" fill-opacity="${on?1:neut?.32:.78}" stroke="var(--panel)" stroke-width="2.5"/><text class="kl" data-x="${tx.toFixed(1)}" data-y="${ty.toFixed(1)}" x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" dominant-baseline="central"${neut&&lab.length>6?' style="font-size:8.5px"':""}>${esc(lab)}</text><title>${esc(neut?NNAME[x]+" ("+FAM[x].name+")":FAM[x].name)}</title></g>`});
+  g.rings.forEach((r,k)=>{const last=k===g.N;wedge+=`<g class="kr" data-k="${k}" style="display:none"><path class="kb" fill="var(--panel)"/><path fill="${col}" fill-opacity="${last?1:k%2?.22:.14}" stroke="var(--panel)" stroke-width="${last||RG[k]&&RG[k].first?2.5:1}"/></g>`});
+  wedge+=`<path class="ko" fill="none" stroke="${col}" stroke-width="2" style="display:none"/><path id="kwl" fill="none"/><text class="kname" opacity="0"><textPath href="#kwl" startOffset="50%" text-anchor="middle" dominant-baseline="central">${esc(t.name.toUpperCase())}</textPath></text>`;
+  const per=RG.map(rg=>{const b=rg.b,ks=ringKeys(rg).filter(k=>fs.includes(b.tone_key.tones[k].fam));const labs=ks.map(k=>symFor(b,k));return{ks,labs,wd:labs.map(l=>Math.max(44,l.length*8.6+20))}});
+  const ch=Math.min(30,g.w-6),maxHalf=Math.max(26,...per.map(p=>p.wd.length?p.wd.reduce((a,x)=>a+x+6,-6)/2:26)),xr=cx-maxHalf-8;
+  RG.forEach((rg,i)=>{const y=cy+(g.rings[i][0]+g.rings[i][1])/2,p=per[i];let txt=rg.l?(rg.first?rg.b.short+" · ":"")+(LSHORT[rg.l.id]||rg.l.name):rg.b.short;if(txt.length*7+44>xr)txt=rg.l&&!rg.first?(LSHORT[rg.l.id]||rg.l.name):rg.b.short;const len=txt.length*7+28;
+    let s=`<g class="wl${rg.l&&!rg.first?" line":""}" transform="translate(${Math.max(len+16,xr).toFixed(1)},${y.toFixed(1)})"><path d="M${-len},-11 H-12 L0,0 L-12,11 H${-len} A11,11 0 0 1 ${-len},-11 Z"/><text x="${-(len+12)/2}" text-anchor="middle" dominant-baseline="central">${esc(txt)}</text><title>${esc(rg.b.name)}${rg.l?" "+esc(rg.l.name):""}</title></g>`;
+    if(!p.ks.length)s+=`<text x="${cx}" y="${y.toFixed(1)}" text-anchor="middle" dominant-baseline="central" class="nocode">no code</text>`;
+    else{const tot=p.wd.reduce((a,x)=>a+x+6,-6);let x0=cx-tot/2;
+      p.ks.forEach((k,j)=>{const x=x0+p.wd[j]/2;x0+=p.wd[j]+6;const sel=S.focus&&S.focus.b===rg.b.id&&S.focus.k===k,kf=rg.b.tone_key.tones[k].fam;
+        s+=`<g class="dot${sel?" sel":""}" data-fam="${kf}" data-b="${rg.b.id}" data-k="${esc(k)}"><rect x="${(x-p.wd[j]/2).toFixed(1)}" y="${(y-ch/2).toFixed(1)}" width="${p.wd[j].toFixed(1)}" height="${ch}" rx="${ch/2}" fill="${FAMCOL[kf]}"/><text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" dominant-baseline="central" style="font-size:${ch>=28?15:13}px">${esc(p.labs[j])}</text><title>${esc(rg.b.short)}${rg.l?" "+esc(rg.l.name):""} ${esc(p.labs[j])} = ${esc(rg.b.tone_key.tones[k].label)}</title></g>`})}
+    items+=`<g class="kit" data-k="${i}" style="opacity:0">${s}</g>`});
+  let hole;
+  if(neut){const p=NP[S.unw];hole=`<text x="${cx}" y="${cy-6}" text-anchor="middle" style="font:600 9px var(--f-body);fill:var(--muted)">REMOVE</text><text x="${cx}" y="${cy+9}" text-anchor="middle" style="font:700 ${p.u.length>8?10.5:12.5}px var(--f-display);fill:${p.uh}">${esc(p.u)}</text>`}
+  else if(t.on){const cm=complementOf(S.fam);hole=`<text x="${cx}" y="${cy-6}" text-anchor="middle" style="font:600 9px var(--f-body);fill:var(--muted)">OPPOSITE</text><text x="${cx}" y="${cy+9}" text-anchor="middle" style="font:700 12.5px var(--f-display);fill:${FAMCOL[cm]}">${famShort(cm)}</text>`}
+  else hole=`<text x="${cx}" y="${cy+4}" text-anchor="middle" style="font:700 11.5px var(--f-display);fill:var(--ink)">${esc(famShort(S.fam))}</text><text x="${cx}" y="${cy+rD+26}" text-anchor="middle" class="nocode">${esc(famShort(S.fam))} has no place on the wheel; its codes are listed alongside.</text>`;
+  return`<svg id="key" viewBox="0 0 ${W} ${H}" role="img" aria-label="${neut?`Neutralise ${esc(NP[S.unw].u)} with ${esc(t.name)}: codes by brand`:`Tone wheel: ${esc(t.name)} codes by brand`}"><g id="kdial">${dial}</g><g id="kwedge"${t.on?"":' style="display:none"'}>${wedge}</g>
+  <circle cx="${cx}" cy="${cy}" r="${r0-2}" fill="var(--panel)"/>${hole}<g id="kitems"${t.on?"":' style="display:none"'}>${items}</g></svg>`}
+function kFrameH(){const g=KH.g,sv=$("#key"),t=KH.t;if(!g||!sv||!t)return;const{cx,cy,r0}=g;
+  sv.querySelector("#kdial").setAttribute("transform",`rotate(${KH.A.toFixed(2)} ${cx} ${cy})`);
+  sv.querySelectorAll(".kl").forEach(e=>e.setAttribute("transform",`rotate(${(-KH.A).toFixed(2)} ${e.dataset.x} ${e.dataset.y})`));
+  if(!t.on)return;
+  const sw=Math.min(KS.spread,t.fams.reduce((a,f)=>a+kSecW(f),0)),fp=KS.fan>0?kEaseO(kcl(KH.tau/KS.fan)):1,ang=sw+(KS.spread-sw)*fp,a0=180-ang/2,a1=180+ang/2;let outer=r0;
+  g.rings.forEach((r,k)=>{const p=KS.grow>0?kEaseO(kcl((KH.tau-k*KS.step)/KS.grow)):(KH.tau>=k*KS.step?1:0),el=sv.querySelector(`.kr[data-k="${k}"]`);
+    if(p<=0)el.style.display="none";else{el.style.display="";const ro=r[0]+(r[1]-r[0])*p,d=kArc(cx,cy,r[0],ro,a0,a1);el.children[0].setAttribute("d",d);el.children[1].setAttribute("d",d);outer=Math.max(outer,ro)}
+    const it=sv.querySelector(`.kit[data-k="${k}"]`);if(it){it.style.opacity=kcl((p-.55)/.45);it.setAttribute("transform",`translate(0,${(-(1-p)*(r[1]-r[0])*.6).toFixed(1)})`)}
+    if(k===g.N){sv.querySelector(".kname").setAttribute("opacity",kcl((p-.5)/.5));const rr=(r[0]+r[1])/2,[x0,y0]=kP(cx,cy,rr,a1),[x1,y1]=kP(cx,cy,rr,a0);sv.querySelector("#kwl").setAttribute("d",`M${x0.toFixed(1)},${y0.toFixed(1)}A${rr},${rr} 0 0 0 ${x1.toFixed(1)},${y1.toFixed(1)}`)}});
+  const ko=sv.querySelector(".ko");if(outer>r0+.5){ko.style.display="";ko.setAttribute("d",kArc(cx,cy,r0,outer,a0,a1))}else ko.style.display="none"}
+const kRM=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
+function segTap(f){if(isNeut())setNeut(SEGP[f]);else setFam(f)}
+function kBindH(){document.querySelectorAll("#kdial .sector").forEach(x=>x.onclick=()=>segTap(x.dataset.fam));
+  document.querySelectorAll("#kitems .dot").forEach(x=>x.onclick=()=>{if(isNeut()){S.focus={b:x.dataset.b,k:x.dataset.k};keyUpdate();refreshSide()}else setFam(x.dataset.fam,{b:x.dataset.b,k:x.dataset.k})})}
+function kSwapH(){const box=$("#kbox");if(!box)return;box.innerHTML=keySvgH();kBindH();kFrameH()}
+function kPlayH(A1,turn=true){cancelAnimationFrame(KH.raf);const tau0=KH.tau,A0=KH.A,Tend=kEndH(),want=kTarget().key;
+  if(kRM()){KH.A=A1;if(KH.key!==want)kSwapH();KH.tau=Tend;kFrameH();return}
+  const Tr=KS.tRet*(tau0/Math.max(1,Tend)),Trot=turn&&Math.abs(A1-A0)>.01?KS.tRot:0,E=Tr+Trot*(1-KS.ov/100),total=Math.max(Tr+Trot,E+Tend);
+  let swapped=false;const t0=performance.now();
+  const tick=now=>{const t=now-t0;
+    if(t<Tr)KH.tau=tau0*(1-t/Tr);
+    else{if(!swapped){KH.tau=0;if(KH.key!==kTarget().key)kSwapH();swapped=true}
+      KH.A=Trot?A0+(A1-A0)*kEaseIO(kcl((t-Tr)/Trot)):A1;KH.tau=t<E?0:Math.min(Tend,t-E)}
+    if(t>=total){KH.A=A1;KH.tau=Tend}
+    kFrameH();if(t<total)KH.raf=requestAnimationFrame(tick)};
+  KH.raf=requestAnimationFrame(tick)}
+/* called when the target changes while the keyhole is showing */
+function keyUpdate(){const t=kTarget();
+  if(t.key===KH.key){document.querySelectorAll("#kitems .dot").forEach(d=>d.classList.toggle("sel",!!S.focus&&d.dataset.b===S.focus.b&&d.dataset.k===S.focus.k));return}
+  if(!t.on){cancelAnimationFrame(KH.raf);KH.tau=0;kSwapH();return}
+  kPlayH(S.rot)}
+function keySetFam(){keyUpdate()}
+function keyStart(){cancelAnimationFrame(KH.raf);KH.A=S.rot;KH.tau=0;kFrameH();if(kTarget().on)kPlayH(S.rot,false)}
+
+/* ---------- chip grid ---------- */
+function gridView(){
+  const B=brands();let all=[];B.forEach(b=>all.push(...shades(b)));
+  const fams=GRID_ORDER.filter(f=>all.some(s=>famOf(s)===f));
+  const levels=[12,11,10,9,8,7,6,5,4,3,2,1,0].filter(l=>all.some(s=>s.depth===l));
+  const narrow=matchMedia("(max-width:720px)").matches;
+  if(!fams.includes(S.gridFam))S.gridFam=fams[0];
+  const cols=narrow?[S.gridFam]:fams;
+  let h=`<div class="chart" style="grid-template-columns:54px repeat(${cols.length},minmax(0,1fr))"><div class="hd" style="border-color:transparent"></div>`;
+  cols.forEach(f=>h+=`<div class="hd" style="border-color:${FAMCOL[f]}">${esc(famShort(f))}</div>`);
+  levels.forEach(l=>{h+=`<div class="lv"><b>${LV_LABEL(l)}</b>${l===0?"pure tone":l>=11?"high lift":""}</div>`;
+    cols.forEach(f=>{const ss=all.filter(s=>s.depth===l&&famOf(s)===f);const grp={};ss.forEach(x=>{const k=x.brand.id+"|"+x.line.id;(grp[k]=grp[k]||[]).push(x)});h+=`<div class="cell">${Object.values(grp).map(gs=>`<div class="lgrp"><span class="lh"><b>${gs[0].brand.short[0]}</b> ${esc(LSHORT[gs[0].line.id]||gs[0].line.name)}</span><div class="lchips">${gs.map(chip).join("")}</div></div>`).join("")}</div>`})});
+  h+="</div>";
+  const tabs=`<div class="famtabs">${fams.map(f=>`<button class="chip" data-gfam="${f}" aria-pressed="${f===S.gridFam}"><span class="mini" style="background:${FAMCOL[f]};margin:0"></span>${famShort(f)}</button>`).join("")}</div>`;
+  return`<div class="gridpage"><h2>Depth × primary tone</h2><p class="note">Each chip is a shade code placed by its own brand's level number and first tone. Swatch colours are sampled from printed charts: different hair, light and print mean chips from different brands cannot be compared colour-for-colour. Tap a chip for details.</p>${tabs}<div class="gridwrap">${h}</div></div>`;
+}
+function chip(s,noAdd){const sec=s.fams[1]?`;background-image:linear-gradient(135deg,transparent 70%,${FAMCOL[s.fams[1]]} 70%)`:"";
+  const ap=noAdd?null:activeProf(),inP=ap&&inProf(ap,s.brand.id,s.line.id,s.code);
+  const badge=ap?`<button class="addb${inP?" on":""}" data-b="${s.brand.id}" data-l="${s.line.id}" data-code="${esc(s.code)}" aria-label="${inP?"Remove "+esc(s.code)+" from":"Add "+esc(s.code)+" to"} ${esc(ap.name)}">${inP?"✓":"+"}</button>`:"";
+  return`<span class="swrap"><button class="sw" data-code="${esc(s.code)}" data-b="${s.brand.id}" data-l="${s.line.id}" title="${esc(s.brand.short+" "+s.line.name+" "+s.code)}"><span class="s" style="background-color:${s.hex}${sec}"><em>${s.brand.short[0]}</em></span><span class="c">${esc(shortCode(s))}</span></button>${badge}</span>`}
+function shortCode(s){return s.brand.id==="loreal"&&s.code.split("/")[0].includes(".")?s.code.split("/")[0]:s.code}
+
+/* ---------- depth ladder ---------- */
+function lum(hex){const n=parseInt(hex.slice(1),16),c=[n>>16,n>>8&255,n&255].map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4});const Y=.2126*c[0]+.7152*c[1]+.0722*c[2];return Y>.008856?116*Math.cbrt(Y)-16:903.3*Y}
+function depthView(){
+  const B=brands(),L=[12,11,10,9,8,7,6,5,4,3,2,1],nat={};
+  B.forEach(b=>{nat[b.id]={};b.lines.forEach(l=>{if(!lineOn(l)||(CAT[l.id]!=="perm"&&b.id!=="redken"))return;l.shades.forEach(s=>{if(s.fams.every(f=>f==="natural")&&s.depth>0)(nat[b.id][s.depth]=nat[b.id][s.depth]||[]).push(s)})})});
+  let h=`<div class="ladder" style="grid-template-columns:44px repeat(${B.length},minmax(0,1fr))"><div class="h">Level</div>${B.map(b=>`<div class="h">${esc(b.short)}</div>`).join("")}`;
+  L.forEach(l=>{const names=B.map(b=>b.depth_names[l]).filter(Boolean);const differ=new Set(names).size>1;h+=`<div class="lvn">${l}</div>`;
+    B.forEach(b=>{const nm=b.depth_names[l],ns=nat[b.id][l];let sw="";
+      if(ns&&ns.length){const ls=ns.map(s=>lum(s.hex)).sort((a,c)=>a-c),m=ls[Math.floor(ls.length/2)],rep=ns.reduce((a,s)=>Math.abs(lum(s.hex)-m)<Math.abs(lum(a.hex)-m)?s:a);
+        sw=`<div class="note"><span class="mini" style="background:${rep.hex}"></span><span class="code">${esc(shortCode({...rep,brand:b}))}</span> · L* ${m.toFixed(0)}</div><div class="bar"><i style="width:${m}%"></i></div>`}
+      h+=`<div>${nm?`<span class="${differ?"diff":""}">${esc(nm)}</span>`:'<span class="note">—</span>'}${sw}</div>`})});
+  h+="</div>";
+  return`<h2>What each level is called</h2><p class="note">Names in orange disagree between brands at that number. Under each name is the brand's natural shade at that level with its printed lightness (L*, 0 = black, 100 = white). Printed lightness is a rough guide only. The measured comparison needs the swatch-book pilot with a grey card.</p><div class="scroll" style="margin-top:12px">${h}</div>
+  <p class="note" style="margin-top:12px">Redken levels are levels of deposit (an acidic gloss with no lift). TIGI 11 is its 100/ ultra light series; Wella and L'Oréal High-Lift sit at 12; Matrix runs to 11.</p>`;
+}
+
+/* ---------- brand pages ---------- */
+/* Wella guide: mixing, developers and corrective recipes transcribed from the Wella Color Expert workbook 2026 (page images; PDF page numbers given). */
+const WG={"lines":[{"id":"kp","name":"Koleston Perfect ME+","type":"Permanent","pg":"PDF p.1","summary":"Permanent colour with up to 100% grey coverage. Ranges: Pure Naturals, Rich Naturals, Vibrant Reds, Deep Browns, Special Blondes, Special Mix.","mix":[{"for":"Pure Naturals, Rich Naturals, Vibrant Reds, Deep Browns","ratio":"1:1","eg":"60g colour + 60g Welloxon Perfect"},{"for":"Special Blonde","ratio":"1:2","eg":"60g Special Blonde + 120g Welloxon Perfect"}],"dev":[{"d":"12% / 40 vol","use":"3 levels of lift (Special Blonde: 5)"},{"d":"9% / 30 vol","use":"2 levels of lift (Special Blonde: 4)"},{"d":"6% / 20 vol","use":"1 level of lift; grey/white coverage on same depth or darker (Special Blonde: 3 levels)"},{"d":"4% / 13 vol","use":"Same depth or darker on natural hair, deeper result, no grey coverage needed"},{"d":"1.9% Welloxon Perfect Pastel","use":"Pastel toning"}],"time":[{"for":"Koleston Perfect ME+","heat":"15–25 min","noheat":"30–40 min"},{"for":"Special Blondes","heat":"25–35 min","noheat":"50–60 min"}]},{"id":"cx","name":"Color Xpress","type":"Permanent (express)","pg":"PDF p.2","summary":"Retouch greys in 10 minutes. 14 shades for express grey root touch-up. Stops processing after 10 minutes.","mix":[{"for":"All shades","ratio":"1:1","eg":"with Welloxon 6%"}],"dev":[{"d":"6% / 20 vol","use":"Standard"}],"time":[{"for":"All shades","noheat":"10 min"}]},{"id":"il","name":"Illumina Color","type":"Permanent","pg":"PDF p.4","summary":"Permanent colour that lightens, darkens and enhances with a sheer, natural result. Up to 3 levels of lift; blends or covers up to 100% grey. Cooler undertones fight brassiness.","mix":[{"for":"All shades","ratio":"1:1","eg":"1 part Illumina + 1 part Welloxon Perfect"}],"dev":[{"d":"12% / 40 vol","use":"3 levels of lift"},{"d":"9% / 30 vol","use":"2 levels of lift"},{"d":"6% / 20 vol","use":"1 level of lift; grey coverage same depth or darker"},{"d":"1.9% Welloxon Perfect Pastel","use":"Pastel toning and balancing"}],"time":[{"for":"All shades","heat":"15–25 min","noheat":"30–40 min"}]},{"id":"ct","name":"Color Touch","type":"Demi-permanent","pg":"PDF p.5","summary":"Demi-permanent, up to 28 washes. Color Touch up to 50% grey coverage; Color Touch Plus up to 70%. Special Mix adds intensity of tone. Mirrors the Koleston Perfect shades.","mix":[{"for":"Color Touch and Special Mix","ratio":"1:2","eg":"1 part colour + 2 parts Color Touch Emulsion 1.9% or 4%"},{"for":"Color Touch Plus","ratio":"1:2","eg":"1 part colour + 2 parts Color Touch Emulsion 4%"}],"dev":[{"d":"1.9% Color Touch Emulsion","use":"Same depth or darkening with a soft regrowth; toning blondes; soft grey blending"},{"d":"4% Color Touch Emulsion","use":"More vibrancy; coarse hair; intense grey blending; up to 70% grey coverage with soft regrowth; low lift"}],"time":[{"for":"All shades","heat":"15 min","noheat":"20 min"}],"apply":"On pre-shampooed damp or clean dry hair."},{"id":"cf","name":"Color Fresh","type":"Semi-permanent","pg":"PDF p.6","summary":"Ready to use; ammonia and developer free, acid pH. Lasts up to 10 shampoos; up to 30% grey blend.","mix":[{"for":"All shades","ratio":"Ready to use","eg":"No developer"}],"dev":[],"time":[{"for":"Color Fresh pH 6.5 and Silver pH 6.5","noheat":"5–20 min, by condition and intensity wanted"}],"apply":"Shampoo and towel dry, apply through lengths and ends, comb through; emulsify with warm water and rinse."},{"id":"pf","name":"Perfecton by Color Fresh","type":"Temporary (tone only)","pg":"PDF p.6","summary":"Leave-in temporary tone; ammonia and developer free. Grey blending up to 15%.","mix":[{"for":"12/0 to 10/0","ratio":"250ml warm water + 5ml"},{"for":"9/0","ratio":"250ml warm water + 10ml"},{"for":"8/0","ratio":"250ml warm water + 15ml"},{"for":"7/0 to 4/0","ratio":"250ml warm water + 20ml"}],"dev":[],"time":[{"for":"All","noheat":"No development time; do not rinse"}],"apply":"Shampoo and towel dry, mix in applicator flask, apply evenly. Do not rinse or shampoo again."},{"id":"sh","name":"Shinefinity","type":"Demi-permanent glaze (zero lift)","pg":"PDF p.9","summary":"Zero lift, zero damage colour glaze. After blonding/lightening, between colour appointments, natural correction (balance moderate unevenness or darken without pre-colouring), balancing lengths with Koleston Perfect ME+ or Illumina on the root.","mix":[{"for":"All shades","ratio":"1:1","eg":"1 part colour + 1 part Shinefinity Activator"}],"dev":[{"d":"Shinefinity Activator","use":"Only developer"}],"time":[{"for":"All shades","noheat":"Up to 20 min"},{"for":"Flash shades 010/0, 010/6, 010/8","noheat":"5 min"}],"apply":"Pre-shampooed towel-dried, or dry hair. Add water and emulsify, then shampoo; no post-colour treatment needed. Pre-shampooed hair gives a softer result and shorter development."},{"id":"bmb","name":"Blondor Multi Blonde Powder","type":"Lightener","pg":"PDF p.10","summary":"Dust-free blue powder, up to 7 levels of lift; anti-yellow molecules.","mix":[{"for":"Standard","ratio":"1:1.5","eg":"30g powder + 45ml Welloxon Perfect 4%, 6%, 9% or 12%"},{"for":"On scalp","ratio":"1:2","eg":"6% only"}],"dev":[{"d":"4%, 6%, 9%, 12% Welloxon Perfect","use":"By lift needed"},{"d":"1.9% Welloxon Perfect Pastel","use":"Can be used"}],"time":[{"for":"All","noheat":"By lift needed and hair condition; do not exceed 50 min. Do not use heat."}]},{"id":"bsb","name":"Blondor Soft Blonde Cream","type":"Lightener (cream)","pg":"PDF p.10","summary":"Cream lightener recommended for on-scalp techniques, up to 7 levels of lift.","mix":[{"for":"Standard","ratio":"1:1","eg":"30g cream + 30ml Welloxon Perfect 4%, 6%, 9% or 12%"},{"for":"On scalp","ratio":"1:2","eg":"6% only"}],"dev":[{"d":"4%, 6%, 9%, 12% Welloxon Perfect","use":"By lift needed"},{"d":"1.9% Welloxon Perfect Pastel","use":"Can be used"}],"time":[{"for":"All","noheat":"By lift needed and hair condition; do not exceed 50 min. Do not use heat."}]},{"id":"bp9","name":"BlondorPlex 9 Powder","type":"Lightener (bond builder)","pg":"PDF p.10","summary":"Lightening powder with bond builder technology, up to 9 levels of lift.","mix":[{"for":"Standard","ratio":"1:1.5","eg":"30g powder + 45ml Welloxon Perfect 4%, 6%, 9% or 12% (6% on scalp only)"}],"dev":[{"d":"4%, 6%, 9%, 12% Welloxon Perfect","use":"By lift needed; 6% only on scalp"},{"d":"1.9% Welloxon Perfect Pastel","use":"Can be used"}],"time":[{"for":"All","noheat":"By lift needed and hair condition; do not exceed 50 min. Do not use heat."}]},{"id":"fl","name":"Blondor Freelights","type":"Lightener (freehand)","pg":"PDF p.12","summary":"White lightening powder for freehand and highlight techniques, up to 7 levels of lift. Use only with Freelights developers.","mix":[{"for":"Standard","ratio":"1:1 to 1:3 (1:1.5 recommended)","eg":"with Freelights Developer 6%, 9% or 12%"}],"dev":[{"d":"Freelights Developer 6%, 9%, 12%","use":"By lift needed"}],"time":[{"for":"All","noheat":"Up to 50 min, by lift needed"}]},{"id":"mg","name":"Magma by Blondor","type":"Lightener + toner in one","pg":"PDF p.14","summary":"Lifts and tones in one step on coloured or virgin hair, for foils and freehand. Off-scalp only, on dry hair.","mix":[{"for":"Freehand","ratio":"1:1.5 to 1:2","eg":"with Freelights Developer 6%, 9% or 12%"},{"for":"Foils","ratio":"1:1.5","eg":"with Welloxon Perfect 4%, 6%, 9% or 12%"},{"for":"Very soft results","ratio":"1:1.5","eg":"with Welloxon Perfect Pastel 1.9%"}],"dev":[],"time":[{"for":"Red shades","heat":"20–40 min","noheat":"30–60 min"},{"for":"Blonde shades","heat":"15–30 min","noheat":"30–60 min"}]},{"id":"bct","name":"BlondorPlex Cream Toners","type":"Toner","pg":"PDF p.15","summary":"Express toning after any bleaching service; neutralises unwanted warmth and brassiness.","mix":[{"for":"Express toning","ratio":"1:2","eg":"with Welloxon Perfect Pastel 1.9%"},{"for":"Express toning and base breaking","ratio":"1:2","eg":"with Welloxon Perfect 4%"}],"dev":[],"time":[{"for":"All","noheat":"5 min. Longer gives more neutralisation and a deeper, more saturated result."}],"apply":"After lightening, shampoo and post-service treatment, then tone."}],"corrective":[{"id":"mild","group":"Removing colour","name":"Mild lightener","pg":"pp.27, 68 (PDF 27, 128)","when":"Removing old colour, bands or a build-up of pigment, and preparing hair for a new colour. Controlled lift of up to 2–3 levels.","mix":"1:4 — 1 part Blondor (Multi Blonde Powder 7, Soft Blonde Cream 7 or BlondorPlex 9) + 4 parts Welloxon Perfect Pastel 1.9%","apply":"Bowl and brush on dry hair, darkest areas first (or on pre-shampooed hair for softer results). Check porosity first.","time":"Up to 30 min, or until the undertone you want is reached","remove":"Rinse, shampoo and anti-oxy (neutralise). Dry, then apply the chosen colour; demi and semi-permanent can go on damp hair."},{"id":"blondor","group":"Removing colour","name":"Blondor lightening","pg":"p.27 (PDF 27)","when":"Greater lightening, if the hair's condition allows. Assess texture and porosity first.","mix":"1:1.5 to 1:2 — 1 part Blondor + 1.5 or 2 parts Welloxon Perfect 4% to 12%","apply":"Bowl and brush on dry hair, darkest areas first; work gently into the hair.","time":"Up to 50 min","remove":"Rinse, shampoo and neutralise."},{"id":"renew","group":"Removing colour","name":"Color Renew","pg":"pp.28, 69 (PDF 28, 129)","when":"Gentle alternative to persulfate products: reduces unwanted oxidative colour without lightening the natural colour. Allows more frequent colour changes.","mix":"1:10 — one 9g sachet Color Renew Crystal Powder (A) + 90ml Activator Liquid (B)","apply":"Bowl or applicator bottle; roots to mid-lengths and ends.","time":"5–45 min, depending on how much colour you want to reduce","remove":"Rinse with water only, then go on with the target colour. If cleaning out highlights: rinse, shampoo and condition."},{"id":"pf","group":"Pre-pigmentation","name":"Pre-pigmentation with Perfecton","pg":"pp.29, 65 (PDF 29, 125)","when":"Darkening bleached hair to depth 8 and darker. Follow with Koleston Perfect or Illumina Color. Shades shown: /3, /43, /44.","mix":"20ml Perfecton + 40ml warm water","apply":"Bottle or sponge on dry hair; comb through evenly.","time":"Up to 15 min (p.65: 10–15 min)","remove":"Pat dry with a tissue or towel (p.65: towel dry or cool hairdryer), then apply the chosen formula."},{"id":"043","group":"Pre-pigmentation","name":"Pre-pigmentation with Koleston Perfect Special Mix 0/43","pg":"pp.29, 65 and poster (PDF 29, 125, 166)","when":"Rich, vibrant target shades (reds and coppers). 0/43 has the high amount of direct dye needed for pre-pigmentation. Follow with vibrant or warm Koleston Perfect shades.","mix":"15g 0/43 + 60ml warm water","apply":"Bowl and brush or sponge on dry, lightened hair only; comb through evenly.","time":"Up to 15 min, no heat (poster: 10–15 min)","remove":"Rinse and dry, then apply the Koleston Perfect target shade.","conflict":"The pages disagree on depth: p.29 and the poster say depth 8/0 or darker; p.65 says 6/0 or darker. The method list on p.65 also says levels 6 and below."},{"id":"ctfill","group":"Darkening","name":"Color Touch filling (2 steps)","pg":"pp.30, 66 and poster (PDF 30, 126, 177)","when":"Going darker without the commitment of permanent colour; ideal for poor condition, high porosity hair.","mix":"Step 1 (filler): 1 part Color Touch + 2 parts Color Touch Emulsion 1.9% (e.g. 30g + 60g), using the chart below. Step 2: your target shade.","apply":"Bowl and brush or bottle on pre-shampooed, towel-dried hair; comb through evenly.","time":"Up to 20 min","remove":"Rinse until the water runs clear, towel dry, then apply the target Color Touch shade.","tableHead":["Target depth","Step 1 filler (p.30)"],"table":[["9","9/03 + 10/0 (1:1.5)"],["8","9/73 + 9/03 (1:2)"],["7","8/73 + 9/03 (1:7)"],["6","8/73 + 9/03 (1:2)"],["5","7/7"],["4","6/7 + 6/4 + 9/03 (2:1:1)"],["3","6/7 + 6/4 (1:2)"],["2","6/7 + 6/4 (1:3)"]],"tip":"Filling formulas are a guide: adjust for hair condition and porosity. Too warm an undertone when pre-pigmenting keeps exposing too much red (p.66).","conflict":"The poster (PDF p.177) gives the same mixes in grams but from depth 6 down puts them one depth lower: 6 = 15g 9/03 + 5g 8/73 or 30g 7/7; 5 = 5g 6/4 + 10g 6/7 + 5g 9/03; 4 = 20g 6/4 + 10g 6/7; 3 = 15g 6/4 + 5g 6/7; 2 = none. Check which your educator uses."},{"id":"kpbtn","group":"Darkening","name":"Koleston Perfect back to natural (1 step)","pg":"pp.31, 67 and poster (PDF 31, 127, 165)","when":"Long-lasting, natural-looking result when darkening pre-lightened or highlighted hair, in one step.","mix":"1 part formula + 2 parts Welloxon Perfect 4% (e.g. 30g + 60g), using the chart below","apply":"Bowl and brush on dry hair; saturate the pre-lightened hair and avoid the natural regrowth to prevent lift. Comb through with a wide-tooth comb every 10 min.","time":"Up to 40 min, without heat","remove":"Rinse thoroughly, shampoo lightly and finish with INVIGO Post Color Treatment.","tableHead":["Target depth","Formula"],"table":[["8/0","8/03 + 8/7 (5:1) — e.g. 50g + 10g"],["7/0","7/00 + 7/03 (5:1) — e.g. 50g + 10g"],["6/0","6/0 + 6/7 (4:1) — e.g. 40g + 10g"],["5/0","55/0 + 5/77 (1:1)"],["4/0","44/0 + 4/77 (1:1)"],["3/0","2/0 + 4/77 (1:1)"],["2/0","2/0 + 4/77 (1:1)"]],"tip":"To enhance or adjust tone afterwards, overlay a gloss: target shade 1:1:1 with Welloxon Perfect Pastel 1.9% and INVIGO Post Color Treatment, up to 15 min (p.67).","conflict":"For 3/0 the poster (PDF p.165) gives 10g 2/0 + 20g 4/77 (1:2), where p.31 gives 1:1."}]};
+function brandView(){
+  const b=DATA.brands.find(x=>x.id===S.brand);
+  const nav=`<nav class="brandnav">${DATA.brands.map(x=>`<a class="chip" href="#b-${x.id}" data-brand="${x.id}" aria-pressed="${x.id===S.brand}">${esc(x.name)}</a>`).join("")}</nav>`;
+  if(!b)return`${nav}<h2>Brand summaries</h2><div class="cards">${DATA.brands.map(x=>`<a class="panel" href="#b-${x.id}" data-brand="${x.id}" style="text-decoration:none;color:inherit"><h3>${esc(x.name)}</h3><p class="code" style="font-size:20px;margin:4px 0">${esc(x.code_example)}</p><p class="note">${x.lines.map(l=>esc(l.name)).join(" · ")}</p><p class="note">${x.lines.reduce((a,l)=>a+l.shades.length,0)} shades · ${esc(x.market)}</p></a>`).join("")}</div>`;
+  const tk=b.tone_key;
+  const toneRows=Object.entries(tk.tones).map(([k,t])=>`<tr><td class="num">${esc(symFor(b,k))}</td><td>${esc(t.label)}</td><td><span class="fam"><i style="background:${FAMCOL[t.fam]}"></i>${esc(FAM[t.fam].name)}</span></td></tr>`).join("");
+  const depth=Object.entries(b.depth_names).map(([k,v])=>`<tr><td class="num">${k}</td><td>${esc(v)}</td></tr>`).join("");
+  const lines=b.lines.map(l=>`<section class="panel"><h3>${esc(l.name)}</h3><p class="note">${esc(l.type)} · ${l.shades.length} shades</p><dl><dt>Mixing ratio</dt><dd>${esc(l.ratio)}</dd><dt>Developers</dt><dd>${Object.entries(l.developers).map(([k,v])=>`<b class="code" style="font-weight:500">${esc(k)}</b>: ${esc(v)}`).join("<br>")}</dd><dt>Time</dt><dd>${esc(l.time)}</dd>${l.grey?`<dt>Grey</dt><dd>${esc(l.grey)}</dd>`:""}<dt>Source</dt><dd class="note">${esc(l.source)}</dd></dl>${l.warnings.map(w=>`<p class="warn" style="margin:10px 0 0">${esc(w)}</p>`).join("")}</section>`).join("");
+  const wt=b.id==="wella"?`<div class="seg btabs" role="group" aria-label="Wella pages">${[["over","Overview"],["mix","Mixing & developers"],["corr","Corrective recipes"]].map(([k,v])=>`<button data-btab="${k}" aria-pressed="${(S.btab||"over")===k}">${v}</button>`).join("")}</div>`:"";
+  if(b.id==="wella"&&S.btab==="mix")return`${nav}<h2>${esc(b.name)}</h2>${wt}${wgMix()}`;
+  if(b.id==="wella"&&S.btab==="corr")return`${nav}<h2>${esc(b.name)}</h2>${wt}${wgCorr()}`;
+  return`${nav}<h2>${esc(b.name)}</h2>${wt}<p style="max-width:70ch">${esc(b.code_format)}</p><p class="note">${esc(b.market)}</p>
+  <div class="cards"><section class="panel"><h3>Tone key</h3><div class="scroll"><table><thead><tr><th>Code</th><th>Brand name</th><th>Family</th></tr></thead><tbody>${toneRows}</tbody></table></div><p class="note">Source: ${esc(tk.key_source)}. Wheel position: ${esc(tk.hue_source)}.</p></section>
+  <section class="panel"><h3>Levels</h3><div class="scroll"><table><tbody>${depth}</tbody></table></div><p class="note">Source: ${esc(b.depth_source)}</p></section></div>
+  <h3 style="margin-top:22px">Product lines</h3><div class="cards">${lines}</div>`;
+}
+
+const WGSRC=`<p class="note">Transcribed from the Wella Color Expert workbook (2026) page images; page numbers are the PDF's. A study guide only: always follow the manufacturer's current instructions and your educator, and do an allergy alert test 48 hours before every colour service.</p>`;
+function wgMix(){
+  const grp=[["Colour",l=>!/Lightener|Toner/i.test(l.type)],["Lightening",l=>/Lightener/i.test(l.type)],["Toning",l=>/Toner/i.test(l.type)]];
+  const row=l=>{const t=l.time[0]||{};return`<details class="wgl"><summary><span class="wn">${esc(l.name)}</span><span class="wt">${esc(l.type)}</span><span class="wr code">${esc(l.mix.map(m=>m.ratio).filter((v,i,a)=>a.indexOf(v)===i).join(" / "))}</span><span class="wtm">${esc(t.noheat||"")}${t.heat?` · heat ${esc(t.heat)}`:""}</span></summary>
+    <div class="wgd"><p>${esc(l.summary)}</p><dl><dt>Mixing</dt><dd>${l.mix.map(m=>`<b>${esc(m.for)}</b>: <span class="code">${esc(m.ratio)}</span>${m.eg?` (${esc(m.eg)})`:""}`).join("<br>")}</dd>
+    ${l.dev.length?`<dt>Developer</dt><dd>${l.dev.map(d=>`<b class="code" style="font-weight:500">${esc(d.d)}</b>: ${esc(d.use)}`).join("<br>")}</dd>`:""}
+    <dt>Development</dt><dd>${l.time.map(t=>`<b>${esc(t.for)}</b>: ${t.noheat?`${esc(t.noheat)}${t.heat?" without heat":""}`:""}${t.heat?`; ${esc(t.heat)} with heat`:""}`).join("<br>")}</dd>
+    ${l.apply?`<dt>Application</dt><dd>${esc(l.apply)}</dd>`:""}<dt>Source</dt><dd class="note">${esc(l.pg)}</dd></dl></div></details>`};
+  return`<p class="note" style="max-width:75ch">Every Wella line in the workbook, with its mixing ratio and development time. Tap a line for developers and details.</p>
+  ${grp.map(([n,f])=>{const ls=WG.lines.filter(f);return ls.length?`<h3 style="margin-top:16px">${n}</h3><div class="wglist"><div class="wgh"><span>Line</span><span>Type</span><span>Ratio</span><span>Time (no heat)</span></div>${ls.map(row).join("")}</div>`:""}).join("")}${WGSRC}`}
+function wgCorr(){
+  const card=c=>`<section class="panel wgc"><h3>${esc(c.name)}</h3><p>${esc(c.when)}</p><dl><dt>Mix</dt><dd>${esc(c.mix)}</dd><dt>Apply</dt><dd>${esc(c.apply)}</dd><dt>Develop</dt><dd>${esc(c.time)}</dd><dt>Remove</dt><dd>${esc(c.remove)}</dd></dl>
+    ${c.table?`<div class="scroll"><table class="wgt"><thead><tr>${c.tableHead.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${c.table.map(r=>`<tr><td class="num">${esc(r[0])}</td><td class="code">${esc(r[1])}</td></tr>`).join("")}</tbody></table></div>`:""}
+    ${c.tip?`<p class="note">${esc(c.tip)}</p>`:""}${c.conflict?`<p class="warn">Sources differ: ${esc(c.conflict)}</p>`:""}<p class="note">Source: ${esc(c.pg)}</p></section>`;
+  const G=["Darkening","Pre-pigmentation","Removing colour"];
+  return`<p class="note" style="max-width:75ch">Going darker on lightened hair needs the missing warm pigment put back first (pre-pigmentation or filling), or the result goes flat or green. Removing colour uses a mild lightener or Color Renew.</p>
+  ${G.map(g=>`<h3 style="margin-top:16px">${g}</h3><div class="cards">${WG.corrective.filter(c=>c.group===g).map(card).join("")}</div>`).join("")}${WGSRC}`}
+/* ---------- saved profiles (shared through the page's database; this device only when that is unavailable) ---------- */
+let PROF=null,DB=null,SHARED=false,DBERR="";
+function profs(){if(!PROF)PROF=SHARED?[]:(store.get("profiles")||[]);return PROF}
+function saveLocal(){if(!SHARED)store.set("profiles",PROF)}
+const pcol=()=>DB.collection("profiles");
+async function writeProf(pf,del){if(!SHARED){saveLocal();return}
+  try{if(del)await pcol().doc(pf.id).delete();else await pcol().doc(pf.id).set({name:pf.name,note:pf.note||"",items:pf.items,created:pf.created||"",createdAt:pf.createdAt||Date.now()});DBERR=""}
+  catch(e){DBERR=e&&e.code==="not_granted"||e&&e.code==="permission_denied"?"You can view these profiles but not change them. Ask the owner for edit access.":"Could not save just now. Try again in a moment.";if(S.view==="saved")render()}}
+function startDb(){if(!window.claude||!claude.use){return}
+  claude.use("db").then(db=>{if(!db)return;DB=db;SHARED=true;PROF=null;
+    pcol().orderBy("createdAt","desc").onSnapshot(snap=>{PROF=snap.docs.map(d=>{const v=d.data()||{};return{id:d.id,name:v.name||"",note:v.note||"",created:v.created||"",createdAt:v.createdAt||0,items:(v.items||[]).map(x=>({b:x.b,l:x.l,code:x.code}))}});
+      const busy=document.activeElement&&document.activeElement.closest&&document.activeElement.closest(".pname,.pnote,#newProfName,#profNew");
+      if(S.view==="saved"&&!busy)render();else if(!busy)renderCollect();const sel=$("#profSel");if(sel&&!busy){const v=sel.value;sel.innerHTML=PROF.map(pf=>`<option value="${pf.id}">${esc(pf.name)}</option>`).join("")+'<option value="__new">New profile…</option>';sel.value=PROF.some(p=>p.id===v)?v:(PROF[0]?PROF[0].id:"__new")}},
+      e=>{DBERR="Shared profiles are unavailable right now.";if(S.view==="saved")render()});
+    if(S.view==="saved")render()}).catch(()=>{})}
+function findShade(bid,lid,code){const b=DATA.brands.find(x=>x.id===bid);if(!b)return null;const l=b.lines.find(x=>x.id===lid);if(!l)return null;const s=l.shades.find(x=>x.code===code);return s?{...s,brand:b,line:l}:null}
+function savedView(){
+  const P=profs();if(!P.some(p=>p.id===S.openProf))S.openProf=(activeProf()||P[0]||{}).id||null;
+  const pf=P.find(p=>p.id===S.openProf);
+  const list=P.map(p=>`<button class="plist${p.id===S.openProf?" sel":""}" data-open="${p.id}"><span class="pl-name">${esc(p.name)}</span><span class="pl-meta">${p.items.length} shade${p.items.length===1?"":"s"}${p.id===S.collect?" · collecting":""}</span><span class="pl-sw">${p.items.slice(0,8).map(it=>{const x=findShade(it.b,it.l,it.code);return x?`<i style="background:${x.hex}"></i>`:""}).join("")}</span></button>`).join("");
+  let det='<p class="note">Create a profile to start collecting shades.</p>';
+  if(pf){const items=pf.items.map(it=>({it,s:findShade(it.b,it.l,it.code)})).filter(x=>x.s);const grp={};items.forEach(x=>{const k=x.s.brand.short+" · "+(LSHORT[x.s.line.id]||x.s.line.name);(grp[k]=grp[k]||[]).push(x)});
+    const rows=Object.entries(grp).map(([k,xs])=>`<div class="pgrp"><span class="lbl">${esc(k)}</span>${xs.map(x=>{const b=x.s.brand,t=x.s.tones.map(t=>b.tone_key.tones[t]?b.tone_key.tones[t].label:"").filter(Boolean).join(" + ");
+      return`<div class="prow"><span class="tsw" style="background:${x.s.hex}"></span><button class="plink code" data-ob="${b.id}" data-ol="${x.s.line.id}" data-oc="${esc(x.s.code)}">${esc(x.s.code)}</button><span class="note" style="margin:0">Level ${x.s.depth}${b.depth_names[x.s.depth]?` · ${esc(b.depth_names[x.s.depth])}`:""}${t?` · ${esc(t)}`:""}</span><button class="rm2" data-p="${pf.id}" data-i="${esc(x.it.b+"|"+x.it.l+"|"+x.it.code)}" aria-label="Remove ${esc(x.s.code)}">Remove</button></div>`}).join("")}</div>`).join("");
+    det=`<div class="ptop"><input class="pname" id="pn-${pf.id}" data-p="${pf.id}" value="${esc(pf.name)}" aria-label="Profile name"><button class="chip" data-collect="${pf.id}" aria-pressed="${S.collect===pf.id}">${S.collect===pf.id?"Collecting into this profile":"Collect into this profile"}</button></div>
+    <textarea class="pnote" id="pt-${pf.id}" data-p="${pf.id}" rows="3" placeholder="Notes: formula, developer, timing, outcome">${esc(pf.note||"")}</textarea>
+    <div class="pdetail">${rows||'<p class="note">No shades yet. Choose Collect into this profile, then tap the + on any chip in the chip grid or Translate, or use Save to profile on a shade\'s details.</p>'}</div>
+    <div class="pfoot"><span class="note" style="margin:0">Created ${esc(pf.created||"")} · ${items.length} shade${items.length===1?"":"s"}</span><span class="del" id="del-${pf.id}"><button class="chip" data-del="${pf.id}">Delete profile</button></span></div>`}
+  return`<div class="savedwrap"><aside class="plistcol"><h2>Saved profiles</h2><form class="newp" id="newProf"><input id="newProfName" placeholder="New profile name" aria-label="New profile name"><button class="chip" type="submit" aria-pressed="true">Create</button></form>${list}
+  <p class="note">${SHARED?"Shared: everyone this page is shared with sees these profiles.":"Kept in this browser on this device only."}</p>${DBERR?`<p class="warn">${esc(DBERR)}</p>`:""}</aside>
+  <section class="panel pdcol">${det}</section></div>`;
+}
+function newProfile(name){const pf={id:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:name.trim()||"Untitled profile",items:[],note:"",created:new Date().toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}),createdAt:Date.now()};profs().unshift(pf);writeProf(pf);return pf}
+function bindSaved(){
+  const f=$("#newProf");if(f)f.onsubmit=e=>{e.preventDefault();const v=$("#newProfName").value;if(!v.trim())return;const np=newProfile(v);S.openProf=np.id;render()};
+  document.querySelectorAll(".pname").forEach(x=>x.onchange=()=>{const pf=profs().find(p=>p.id===x.dataset.p);if(pf){pf.name=x.value.trim()||pf.name;writeProf(pf)}});
+  document.querySelectorAll(".pnote").forEach(x=>x.onchange=()=>{const pf=profs().find(p=>p.id===x.dataset.p);if(pf){pf.note=x.value;writeProf(pf)}});
+  document.querySelectorAll("[data-open]").forEach(x=>x.onclick=()=>{S.openProf=x.dataset.open;render()});
+  document.querySelectorAll(".plink").forEach(x=>x.onclick=()=>openSheet(x.dataset.ob,x.dataset.ol,x.dataset.oc));
+  document.querySelectorAll(".rm,.rm2").forEach(x=>x.onclick=()=>{const pf=profs().find(p=>p.id===x.dataset.p);if(!pf)return;pf.items=pf.items.filter(it=>it.b+"|"+it.l+"|"+it.code!==x.dataset.i);writeProf(pf);render()});
+  document.querySelectorAll("[data-collect]").forEach(x=>x.onclick=()=>{S.collect=S.collect===x.dataset.collect?null:x.dataset.collect;saveCollect();render()});
+  document.querySelectorAll("[data-del]").forEach(x=>x.onclick=()=>{const id=x.dataset.del;$("#del-"+id).innerHTML=`<span class="note" style="margin:0">Delete this profile?</span> <button class="chip" data-yes="${id}">Delete</button> <button class="chip" data-no="1">Keep</button>`;
+    $(`[data-yes="${id}"]`).onclick=()=>{const pf=profs().find(p=>p.id===id);PROF=profs().filter(p=>p.id!==id);if(pf)writeProf(pf,true);render()};$("#del-"+id+" [data-no]").onclick=()=>render()});
+}
+function saveBlock(b,l,s){const P=profs();
+  return`<div class="saveto"><span class="lbl">Save to profile</span><select id="profSel">${P.map(pf=>`<option value="${pf.id}">${esc(pf.name)}</option>`).join("")}<option value="__new">New profile…</option></select><input id="profNew" placeholder="Profile name" ${P.length?"hidden":""}><button class="chip" id="profAdd" aria-pressed="true">Save</button><span id="profMsg" class="note" style="margin:0"></span></div>`}
+function bindSaveBlock(b,l,s){const sel=$("#profSel"),inp=$("#profNew");if(!sel)return;if(!profs().length)sel.value="__new";else if(activeProf())sel.value=S.collect;
+  sel.onchange=()=>{inp.hidden=sel.value!=="__new";if(!inp.hidden)inp.focus()};
+  $("#profAdd").onclick=()=>{let pf;if(sel.value==="__new"){if(!inp.value.trim()){inp.focus();return}pf=newProfile(inp.value)}else pf=profs().find(p=>p.id===sel.value);
+    if(!pf.items.some(it=>it.b===b.id&&it.l===l.id&&it.code===s.code)){pf.items=[...pf.items,{b:b.id,l:l.id,code:s.code}];writeProf(pf)}renderCollect();
+    $("#profMsg").textContent="Saved to "+pf.name;if(S.view==="saved")render()}}
+
+/* ---------- translate A ⇄ B ---------- */
+// Lines grouped by what they are used for, so "comparable lines" means like-for-like.
+const COMP={koleston:"perm",inoa:"perm",majirel:"perm",creative:"perm",blended:"perm",reflect:"vivid",extra:"cover",ultra:"hl",dialight:"acid",shadeseq:"acid",diacolor:"demi",gloss:"demi",mixmaster:"add"};
+const COMPNAME={perm:"permanent",vivid:"vivid permanent",cover:"high grey cover",hl:"high lift",acid:"acidic gloss / toner",demi:"demi-permanent",add:"pure tone additive"};
+const RELATED={perm:["vivid","cover","hl"],vivid:["perm","cover"],cover:["perm","vivid"],hl:["perm"],acid:["demi"],demi:["acid"],add:[]};
+const X={a:{b:"wella",l:"koleston"},z:{b:"loreal",l:"inoa"},code:"7/43"};
+const lineOf=(bid,lid)=>{const b=B_(bid);return{b,l:b.lines.find(x=>x.id===lid)||b.lines[0]}};
+function bestMatchLine(b,lid){const g=COMP[lid];return(b.lines.find(x=>COMP[x.id]===g)||b.lines[0]).id}
+function findCode(l,txt){const t=txt.trim().toLowerCase().replace(/\s+/g,"").replace(",",".");if(!t)return null;
+  return l.shades.find(s=>{const c=s.code.toLowerCase();return c===t||c.split("/")[0]===t||c.split("/")[1]===t})||null}
+function candidates(s,l){const out=[];const add=(x,tier)=>{if(!out.some(o=>o.s.code===x.code))out.push({s:x,tier})};
+  l.shades.filter(x=>x.depth===s.depth&&x.fams[0]===s.fams[0]&&(x.fams[1]||null)===(s.fams[1]||null)).forEach(x=>add(x,"Same level, same tones"));
+  l.shades.filter(x=>x.depth===s.depth&&x.fams[0]===s.fams[0]).forEach(x=>add(x,"Same level, same primary tone"));
+  if(out.length<3)l.shades.filter(x=>Math.abs(x.depth-s.depth)===1&&x.fams[0]===s.fams[0]).forEach(x=>add(x,"One level away, same primary tone"));
+  if(out.length<3){const i=WHEEL_ORDER.indexOf(s.fams[0]);if(i>=0){const nb=[WHEEL_ORDER[(i+1)%8],WHEEL_ORDER[(i+7)%8]];l.shades.filter(x=>x.depth===s.depth&&nb.includes(x.fams[0])).forEach(x=>add(x,"Same level, neighbouring tone family"))}}
+  return out.slice(0,14)}
+function translateView(){
+  const A=lineOf(X.a.b,X.a.l),Z=lineOf(X.z.b,X.z.l);
+  const selB=(id,v)=>`<select id="${id}">${DATA.brands.map(b=>`<option value="${b.id}" ${b.id===v?"selected":""}>${esc(b.short)}</option>`).join("")}</select>`;
+  const selL=(id,b,v)=>`<select id="${id}">${b.lines.map(l=>`<option value="${l.id}" ${l.id===v?"selected":""}>${esc(LSHORT[l.id]||l.name)}</option>`).join("")}</select>`;
+  const s=findCode(A.l,X.code);
+  let res;
+  if(!X.code.trim())res=`<p class="note">Type a ${esc(A.b.short)} ${esc(LSHORT[A.l.id]||A.l.name)} code, or tap one below.</p>`;
+  else if(!s)res=`<p class="warn">${esc(X.code)} is not on the ${esc(A.b.short)} ${esc(A.l.name)} chart in this data.</p>`;
+  else{const c=candidates({...s},Z.l);const tones=s.tones.map((t,i)=>{const tk=A.b.tone_key.tones[t];return tk?`${esc(symFor(A.b,t))} ${esc(tk.label)}`:""}).filter(Boolean).join(" + ");
+    const grp={};c.forEach(x=>(grp[x.tier]=grp[x.tier]||[]).push(x.s));
+    res=`<div class="xres"><div class="xsrc">${swatchHtml(s)}<div><div class="code xcode">${esc(s.code)}</div><div class="note" style="margin:0">Level ${s.depth}${A.b.depth_names[s.depth]?` · ${esc(A.b.depth_names[s.depth])}`:""}${tones?` · ${tones}`:""}</div></div></div>
+    <div class="xarrow" aria-hidden="true">→</div>
+    <div class="xdst">${c.length?Object.entries(grp).map(([t,ss])=>`<div class="xtier"><span class="lbl tier ${t.startsWith("Same level, same tones")?"good":t.startsWith("Same level, same primary")?"fair":"poor"}">${esc(t)}</span><div class="lchips">${ss.map(x=>chip({...x,brand:Z.b,line:Z.l})).join("")}</div></div>`).join(""):`<p class="note">No ${esc(Z.b.short)} ${esc(Z.l.name)} shade at this level and tone family.</p>`}
+    ${Z.b.depth_names[s.depth]?`<p class="note" style="margin:6px 0 0">${esc(Z.b.short)} calls level ${s.depth} “${esc(Z.b.depth_names[s.depth])}”${A.b.depth_names[s.depth]&&A.b.depth_names[s.depth]!==Z.b.depth_names[s.depth]?` (${esc(A.b.short)}: “${esc(A.b.depth_names[s.depth])}”)`:""}.</p>`:""}</div></div>
+    <p class="note">Matched on level number and tone family from each brand's own chart. Treat it as the place to start in the swatch book, not a colour match: levels are not yet measured between brands.</p>`}
+  // tone dictionary by family
+  const fams=GRID_ORDER.filter(f=>f!=="clear");
+  const dict=fams.map(f=>{const ka=Object.keys(A.b.tone_key.tones).filter(k=>A.b.tone_key.tones[k].fam===f),kz=Object.keys(Z.b.tone_key.tones).filter(k=>Z.b.tone_key.tones[k].fam===f);if(!ka.length&&!kz.length)return"";
+    const cell=(b,ks)=>ks.length?ks.map(k=>`<span class="tag" style="background:${FAMCOL[f]}">${esc(symFor(b,k))}</span>${esc(b.tone_key.tones[k].label)}`).join("<br>"):'<span class="note">—</span>';
+    return`<tr><td><span class="fam"><i style="background:${FAMCOL[f]}"></i>${esc(famShort(f))}</span></td><td>${cell(A.b,ka)}</td><td>${cell(Z.b,kz)}</td></tr>`}).join("");
+  const lv=[12,11,10,9,8,7,6,5,4,3,2,1].filter(l=>A.b.depth_names[l]||Z.b.depth_names[l]).map(l=>{const a=A.b.depth_names[l],z=Z.b.depth_names[l],d=a&&z&&a!==z;return`<tr><td class="num">${l}</td><td class="${d?"diff":""}">${esc(a||"—")}</td><td class="${d?"diff":""}">${esc(z||"—")}</td></tr>`}).join("");
+  const mx=l=>`<dl><dt>Type</dt><dd>${esc(l.type)}</dd><dt>Ratio</dt><dd>${esc(l.ratio)}</dd><dt>Time</dt><dd>${esc(l.time)}</dd><dt>Developers</dt><dd>${Object.entries(l.developers).map(([k,v])=>`<b class="code" style="font-weight:500">${esc(k)}</b>: ${esc(v)}`).join("<br>")}</dd></dl>`;
+  const picks=A.l.shades.filter(x=>x.depth>0).slice(0,400);
+  return`<div class="xlate">
+  <div class="xbar"><div class="xside"><span class="lbl">From</span>${selB("xAb",A.b.id)}${selL("xAl",A.b,A.l.id)}</div>
+  <button class="chip xswap" id="xSwap" aria-label="Swap direction">⇄ Swap</button>
+  <div class="xside"><span class="lbl">To</span>${selB("xZb",Z.b.id)}${selL("xZl",Z.b,Z.l.id)}</div></div>
+  ${(()=>{const ga=COMP[A.l.id],gz=COMP[Z.l.id],lvl=ga===gz?"good":(RELATED[ga]||[]).includes(gz)?"fair":"poor";
+   const head={good:"Good match",fair:"Partial match",poor:"Poor match"}[lvl],why={good:"Both lines do the same job, so codes compare directly.",fair:"Related lines that work differently. Use the codes as a guide and check the swatch book.",poor:"These lines do different jobs, so codes will not line up. Pick a comparable line to translate into."}[lvl];
+   const alt=lvl!=="good"?Z.b.lines.find(l=>COMP[l.id]===ga):null;
+   return`<div class="light ${lvl}" role="status"><span class="lamp" aria-hidden="true"></span><div><b>${head}.</b> ${esc(LSHORT[A.l.id]||A.l.name)} is ${esc(COMPNAME[ga]||"")}; ${esc(LSHORT[Z.l.id]||Z.l.name)} is ${esc(COMPNAME[gz]||"")}. ${why}${alt?` <button class="chip" id="xFix" data-l="${alt.id}">Use ${esc(Z.b.short)} ${esc(LSHORT[alt.id]||alt.name)} instead</button>`:""}</div></div>`})()}
+  <section class="panel"><label class="xin"><span class="lbl">${esc(A.b.short)} code</span><input id="xCode" list="xCodes" value="${esc(X.code)}" autocomplete="off" placeholder="${esc(A.b.code_example)}"><datalist id="xCodes">${picks.map(x=>`<option value="${esc(x.code)}">`).join("")}</datalist></label>${res}</section>
+  <div class="xgrid"><section class="panel"><h3>Tone key</h3><div class="scroll"><table><thead><tr><th>Family</th><th>${esc(A.b.short)}</th><th>${esc(Z.b.short)}</th></tr></thead><tbody>${dict}</tbody></table></div></section>
+  <section class="panel"><h3>Level names</h3><div class="scroll"><table><thead><tr><th>Level</th><th>${esc(A.b.short)}</th><th>${esc(Z.b.short)}</th></tr></thead><tbody>${lv}</tbody></table></div><p class="note">Orange: the two brands name this level differently.</p></section>
+  <section class="panel"><h3>${esc(A.b.short)} ${esc(LSHORT[A.l.id]||A.l.name)}</h3>${mx(A.l)}</section><section class="panel"><h3>${esc(Z.b.short)} ${esc(LSHORT[Z.l.id]||Z.l.name)}</h3>${mx(Z.l)}</section></div></div>`;
+}
+function bindTranslate(){
+  const re=()=>{render()};
+  const on=(id,f)=>{const e=$("#"+id);if(e)e.onchange=()=>{f(e.value);re()}};
+  on("xAb",v=>{X.a={b:v,l:bestMatchLine(B_(v),X.a.l)};if(X.a.b===X.z.b){const o=DATA.brands.find(b=>b.id!==v);X.z={b:o.id,l:bestMatchLine(o,X.a.l)}}X.code=""});
+  on("xAl",v=>{X.a.l=v;X.z.l=bestMatchLine(B_(X.z.b),v)});
+  on("xZb",v=>{X.z={b:v,l:bestMatchLine(B_(v),X.a.l)};if(X.a.b===X.z.b){const o=DATA.brands.find(b=>b.id!==v);X.a={b:o.id,l:bestMatchLine(o,X.z.l)};X.code=""}});
+  on("xZl",v=>{X.z.l=v});
+  const fx=$("#xFix");if(fx)fx.onclick=()=>{X.z.l=fx.dataset.l;render()};
+  $("#xSwap").onclick=()=>{const s=findCode(lineOf(X.a.b,X.a.l).l,X.code);const t=X.a;X.a=X.z;X.z=t;
+    if(s){const c=candidates(s,lineOf(X.a.b,X.a.l).l);X.code=c.length?c[0].s.code:""}else X.code="";render()};
+  const i=$("#xCode");if(i){i.oninput=()=>{X.code=i.value;const p=i.selectionStart;render();const n=$("#xCode");n.focus();try{n.setSelectionRange(p,p)}catch(e){}}}
+}
+
+/* ---------- train ---------- */
+// Lightening curve: Wella Color Expert workbook 2026, p.63 (Wella Professionals lightening curve).
+const UP={10:["very pale yellow","violet"],9:["pale yellow","violet"],8:["yellow","violet"],7:["orange yellow","blue/violet"],6:["orange","blue"],5:["red orange","green/blue"],4:["red","green"],3:["red","green"],2:["red","green"]};
+const UPFAMS={"violet":["violet"],"blue/violet":["pearl"],"blue":["ash"],"green/blue":["ash","green"],"green":["green"]};
+// Wella tone numbering and what each tone does: Wella Color Expert workbook 2026, p.62.
+const WTONE=[["/1","Ash (grey)","to subdue"],["/2","Matt Ash (green)","neutralise red"],["/3","Gold (yellow)","neutralise violet"],["/4","Red","neutralise green"],["/5","Mahogany (red & violet)","neutralise green or gold"],["/6","Violet (red & blue)","neutralise gold"],["/7","Brunette (orange & violet)",null],["/8","Pearl Ash (blue)","neutralise orange"],["/9","Cendre (grey/violet)","to subdue"]];
+const WSRC="Wella Color Expert workbook";
+const WFACT=[
+ {lv:"easy",q:"In Wella 4/71, what is the 7?",a:"The major tone",o:["The depth","The minor tone","The developer strength"],x:"4 = depth, 7 = major tone, 1 = minor tone.",src:"p.62"},
+ {lv:"easy",q:"In Wella 4/71, what is the 1?",a:"The minor tone",o:["The major tone","The depth","The mixing ratio"],x:"4 = depth, 7 = major tone, 1 = minor tone.",src:"p.62"},
+ {lv:"hard",q:"In Wella 77/45, what does the doubled 77 tell you?",a:"Intensity of tone at depth 7",o:["Level 7 applied twice","Extra lift above level 7","Level 77 on a longer scale"],x:"A doubled depth number shows intensity of tone depth: 77/45 is an intense depth 7 with major tone 4 (red) and minor tone 5 (mahogany).",src:"loose numbering sheet, PDF p.22"},
+ {lv:"medium",q:"Which tones appear darker on the hair?",a:"Cool tones",o:["Warm tones","Gold tones","Red tones"],x:"Cool tones appear darker; warm tones keep shades bright.",src:"p.62"},
+ {lv:"medium",q:"What do warm tones do to a shade?",a:"Keep it bright",o:["Make it appear darker","Subdue it","Neutralise it"],x:"Warm tones keep shades bright. Tones containing both cool and warm can keep cooler shades brighter.",src:"p.62"},
+ {lv:"easy",q:"What is Wella level 8 called?",a:"Light blonde",o:["Medium blonde","Very light blonde","Dark blonde"],x:"10 lightest blonde, 9 very light blonde, 8 light blonde, 7 medium blonde, 6 dark blonde.",src:"p.62"},
+];
+const STATIC=[
+ {lv:"easy",q:"How long before a colour service should the allergy alert test be done?",a:"At least 48 hours",o:["24 hours","12 hours","Just before the service"],x:"At least 48 hours before every colour service (stated in the Wella and TIGI guides)."},
+ {lv:"medium",q:"20 volume developer is what strength?",a:"6%",o:["3%","9%","12%"],x:"10 vol = 3%, 20 vol = 6%, 30 vol = 9%, 40 vol = 12%."},
+ {lv:"medium",q:"30 volume developer is what strength?",a:"9%",o:["6%","12%","3%"],x:"10 vol = 3%, 20 vol = 6%, 30 vol = 9%, 40 vol = 12%."},
+ {lv:"medium",q:"Which developer gives the most lift?",a:"40 vol / 12%",o:["20 vol / 6%","30 vol / 9%","10 vol / 3%"],x:"Higher volume releases more oxygen and lifts more natural pigment."},
+ {lv:"easy",q:"Which type of colour lasts until it grows out?",a:"Permanent",o:["Demi-permanent","Semi-permanent","Temporary"],x:"Permanent colour changes the pigment inside the cortex and has to grow out or be removed."},
+];
+const TOPIC={level:"Levels (depth)",tone:"Major (primary) tone",second:"Minor (secondary) tone",decode:"Reading a whole code",pigment:"Underlying pigment",neut:"Neutralising",toneuse:"What each tone does",facts:"Core facts"};
+const LEVELS={easy:{name:"Easy",gens:["level","dname","tone","wfact","fact"]},medium:{name:"Medium",gens:["second","pigment","neut","toneuse","wfact","fact"]},hard:{name:"Hard",gens:["decode","neutcode","toneuse2","wfact"]},mixed:{name:"Mixed",gens:null}};
+const GENTOPIC={level:"level",dname:"level",tone:"tone",second:"second",decode:"decode",pigment:"pigment",neut:"neut",neutcode:"neut",toneuse:"toneuse",toneuse2:"toneuse",wfact:"facts",fact:"facts"};
+const T={mode:"nvq",level:"easy",brand:"wella",from:"wella",to:"loreal",q:null,picked:null,score:0,asked:0,streak:0,miss:[]};
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{const c=[...a];for(let i=c.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[c[i],c[j]]=[c[j],c[i]]}return c};
+const allShades=b=>b.lines.flatMap(l=>l.shades.map(s=>({...s,brand:b,line:l})));
+const B_=id=>DATA.brands.find(b=>b.id===id);
+function opts(ans,pool,n=3){const others=shuffle([...new Set(pool.filter(x=>x!==ans))]).slice(0,n);return shuffle([ans,...others]).map(t=>({t,ok:t===ans}))}
+function swatchHtml(s){return`<span class="tsw" style="background:${s.hex}"></span>`}
+const tk=(b,k)=>b.tone_key.tones[k];
+const staticQ=(q,src)=>({p:esc(q.q),o:shuffle([q.a,...q.o]).map(t=>({t,ok:t===q.a})),x:esc(q.x)+(src?` <span class="note">Source: ${WSRC}, ${esc(src)}.</span>`:` <span class="note">General knowledge: check against your course notes.</span>`)});
+const GEN={
+ level(){const b=B_(T.brand),s=rnd(allShades(b).filter(s=>s.depth>0&&b.depth_names[s.depth]));if(!s)return null;
+  return{p:`${swatchHtml(s)}What level is <b class="code">${esc(s.code)}</b>?`,o:opts(b.depth_names[s.depth],Object.values(b.depth_names)),x:`<b class="code">${esc(s.code)}</b> is level ${s.depth}: ${esc(b.depth_names[s.depth])}. The number before the ${b.tone_key.sep||"tone letters"} is the level.`,fam:s.fams[0],grid:true}},
+ dname(){const b=B_(T.brand),Ls=Object.keys(b.depth_names).filter(l=>+l>=1&&+l<=10);if(!Ls.length)return null;const L=rnd(Ls);
+  return{p:`In ${esc(b.short)}, which level number is <b>${esc(b.depth_names[L])}</b>?`,o:opts(String(L),Ls.map(String)),x:`${esc(b.depth_names[L])} is level ${L}.`}},
+ tone(){const b=B_(T.brand),s=rnd(allShades(b).filter(s=>s.depth>0&&s.tones[0]&&tk(b,s.tones[0])));if(!s)return null;const t=tk(b,s.tones[0]);
+  return{p:`${swatchHtml(s)}What is the major (primary) tone of <b class="code">${esc(s.code)}</b>?`,o:opts(t.label,Object.values(b.tone_key.tones).map(x=>x.label)),x:`Major tone ${esc(symFor(b,s.tones[0]))} = ${esc(t.label)}${s.tones[1]&&tk(b,s.tones[1])?`; minor ${esc(symFor(b,s.tones[1]))} = ${esc(tk(b,s.tones[1]).label)}`:""}.`,fam:t.fam}},
+ second(){const b=B_(T.brand),s=rnd(allShades(b).filter(s=>s.depth>0&&s.tones[1]&&tk(b,s.tones[1])&&tk(b,s.tones[0])&&s.tones[1]!=="0"));if(!s)return null;const t=tk(b,s.tones[1]);
+  return{p:`${swatchHtml(s)}What is the minor (secondary) tone of <b class="code">${esc(s.code)}</b>?`,o:opts(t.label,Object.values(b.tone_key.tones).map(x=>x.label)),x:`In <b class="code">${esc(s.code)}</b> the major tone is ${esc(tk(b,s.tones[0]).label)} and the minor tone is ${esc(t.label)}. The minor tone is the softer, second reflect.`,fam:t.fam}},
+ decode(){const b=B_(T.brand),pool=allShades(b).filter(s=>s.depth>0&&s.depth<=10&&s.tones[1]&&tk(b,s.tones[0])&&tk(b,s.tones[1])&&s.tones[0]!==s.tones[1]&&b.depth_names[s.depth]);if(!pool.length)return null;const s=rnd(pool);
+  const f=(d,a,c)=>`${b.depth_names[d]} · ${tk(b,a).label} · ${tk(b,c).label}`,ans=f(s.depth,s.tones[0],s.tones[1]);
+  const alt=[f(s.depth,s.tones[1],s.tones[0])];const Ls=Object.keys(b.depth_names).filter(l=>+l!==s.depth&&+l>=2&&+l<=10);if(Ls.length)alt.push(f(+rnd(Ls),s.tones[0],s.tones[1]));
+  const others=Object.keys(b.tone_key.tones).filter(k=>k!==s.tones[0]&&k!==s.tones[1]&&k!=="0");if(others.length)alt.push(f(s.depth,s.tones[0],rnd(others)));
+  return{p:`${swatchHtml(s)}Read the whole code <b class="code">${esc(s.code)}</b>: level · major tone · minor tone`,o:shuffle([ans,...new Set(alt.filter(x=>x!==ans))]).map(t=>({t,ok:t===ans})),x:`<b class="code">${esc(s.code)}</b> = ${esc(ans)}. Depth first, then major tone, then minor tone; swapping the two tone digits changes the shade.`,fam:s.fams[0],grid:true}},
+ pigment(){const L=rnd(Object.keys(UP));return{p:`Hair lightened to <b>level ${L}</b> shows which underlying pigment?`,o:opts(UP[L][0],[...new Set(Object.values(UP).map(x=>x[0]))]),x:`Level ${L} exposes ${UP[L][0]}. Neutralise it with ${UP[L][1]}. <span class="note">Source: ${WSRC}, p.63 (lightening curve).</span>`}},
+ neut(){const L=rnd(Object.keys(UP));return{p:`At level ${L} the hair shows <b>${UP[L][0]}</b>. Which tone neutralises it?`,o:opts(UP[L][1],[...new Set(Object.values(UP).map(x=>x[1])),"gold","orange","red"]),x:`${esc(UP[L][0])} is neutralised by ${esc(UP[L][1])}, its opposite on the colour wheel. <span class="note">Source: ${WSRC}, p.63.</span>`,fam:UPFAMS[UP[L][1]][0]}},
+ neutcode(){const b=B_(T.brand),L=rnd(Object.keys(UP)),fs=UPFAMS[UP[L][1]],good=Object.keys(b.tone_key.tones).filter(k=>fs.includes(tk(b,k).fam));if(!good.length)return null;
+  const ans=rnd(good),bad=Object.keys(b.tone_key.tones).filter(k=>!fs.includes(tk(b,k).fam)&&k!=="0");if(bad.length<2)return null;
+  return{p:`Hair lightened to <b>level ${L}</b> shows ${esc(UP[L][0])}. Which ${esc(b.short)} tone would neutralise it?`,o:shuffle([ans,...shuffle(bad).slice(0,3)]).map(k=>({t:`${symFor(b,k)} ${tk(b,k).label}`,ok:k===ans})),x:`${esc(UP[L][0])} needs ${esc(UP[L][1])}. In ${esc(b.short)}: ${good.map(k=>`<b class="code">${esc(symFor(b,k))}</b> ${esc(tk(b,k).label)}`).join(", ")}.`,fam:fs[0]}},
+ toneuse(){const rows=WTONE.filter(r=>r[2]&&r[2]!=="to subdue"),r=rnd(rows);
+  return{p:`In Wella, what does <b class="code">${r[0]}</b> ${esc(r[1])} do?`,o:opts(r[2],WTONE.map(x=>x[2]).filter(Boolean)),x:`Wella ${r[0]} ${esc(r[1])}: ${esc(r[2])}. <span class="note">Source: ${WSRC}, p.62.</span>`}},
+ toneuse2(){const rows=WTONE.filter(r=>r[2]&&r[2].startsWith("neutralise ")&&!r[2].includes(" or ")),r=rnd(rows),what=r[2].replace("neutralise ","");
+  return{p:`Which Wella tone is used to neutralise <b>${esc(what)}</b>?`,o:opts(`${r[0]} ${r[1]}`,WTONE.map(x=>`${x[0]} ${x[1]}`)),x:`${r[0]} ${esc(r[1])} neutralises ${esc(what)}. <span class="note">Source: ${WSRC}, p.62.</span>`}},
+ wfact(){const pool=WFACT.filter(f=>T.level==="mixed"||f.lv===T.level);if(!pool.length)return null;const q=rnd(pool);return staticQ(q,q.src)},
+ fact(){const pool=STATIC.filter(f=>T.level==="mixed"||f.lv===T.level);if(!pool.length)return null;return staticQ(rnd(pool))},
+};
+const MODES={nvq:{name:"Learning colour (NVQ 2)"}};
+
+/* --- progress: kept per person in the shared db (scores/<id>), mirrored on this device --- */
+let MY={a:0,c:0,topics:{},best:{},recent:[]},MYID=null,USER=null,SCORES=[],SCOREDB=null,SCOREERR="",NAMES={},saving=false,dirty=false;
+function loadLocal(){const v=store.get("train-stats");if(v&&typeof v==="object")MY={a:v.a||0,c:v.c||0,topics:v.topics||{},best:v.best||{},recent:v.recent||[]}}
+function cleanStats(v){const o={a:+v.a||0,c:+v.c||0,topics:{},best:{},recent:[]};Object.entries(v.topics||{}).forEach(([k,x])=>{if(TOPIC[k])o.topics[k]={a:+x.a||0,c:+x.c||0}});Object.entries(v.best||{}).forEach(([k,x])=>{if(LEVELS[k])o.best[k]=+x||0});(v.recent||[]).slice(-60).forEach(r=>o.recent.push({t:r.t,ok:!!r.ok}));return o}
+function pushScore(){store.set("train-stats",MY);if(!SCOREDB||!MYID)return;if(saving){dirty=true;return}saving=true;dirty=false;
+  SCOREDB.doc("scores/"+MYID).set({...MY,updated:Date.now()}).then(()=>{SCOREERR=""}).catch(e=>{SCOREERR=(e&&e.code)==="invalid_argument"||(e&&e.code)==="permission_denied"?"Your results are kept on this device only: ask Dav to give you edit access so they are shared.":"Couldn't save results just now; they're kept on this device."}).finally(()=>{saving=false;if(dirty)pushScore();if(S.view==="train")drawProgress()})}
+function startScores(){loadLocal();if(!window.claude||!claude.use)return;
+  Promise.all([claude.use("db"),claude.use("user")]).then(async([db,user])=>{USER=user;if(!db||!user)return;MYID=await user.id();if(!MYID)return;SCOREDB=db;
+    let first=true;
+    db.collection("scores").onSnapshot(snap=>{SCORES=snap.docs.map(d=>({id:d.id,...cleanStats(d.data()||{}),updated:+(d.data()||{}).updated||0}));
+      const mine=SCORES.find(x=>x.id===MYID);
+      if(first){first=false;if(mine&&mine.a>=MY.a)MY=cleanStats(mine);else if(MY.a)pushScore()}
+      if(S.view==="train")drawProgress()},()=>{SCOREERR="Shared scores are unavailable right now.";if(S.view==="train")drawProgress()})}).catch(()=>{})}
+function record(q,ok){const t=q.topic;MY.a++;if(ok)MY.c++;const s=MY.topics[t]||(MY.topics[t]={a:0,c:0});s.a++;if(ok)s.c++;
+  MY.recent.push({t,ok});if(MY.recent.length>60)MY.recent=MY.recent.slice(-60);
+  if(T.streak>(MY.best[T.level]||0))MY.best[T.level]=T.streak;pushScore()}
+const acc=s=>s&&s.a?s.c/s.a:null;
+function rankTopics(st){return Object.keys(TOPIC).map(k=>({k,s:st.topics[k]})).filter(x=>x.s&&x.s.a>=3).sort((a,b)=>acc(a.s)-acc(b.s))}
+/* weight question types towards topics this person gets wrong more often */
+function pickGen(){const gens=LEVELS[T.level].gens||Object.keys(GEN);
+  const w=gens.map(g=>{const a=acc(MY.topics[GENTOPIC[g]]);return a==null?1:0.35+(1-a)*1.6});
+  let r=Math.random()*w.reduce((x,y)=>x+y,0);for(let i=0;i<gens.length;i++){r-=w[i];if(r<=0)return gens[i]}return gens[gens.length-1]}
+function nextQ(){for(let i=0;i<30;i++){const g=pickGen(),q=GEN[g]();if(q){q.topic=GENTOPIC[g];T.q=q;T.picked=null;return}}T.q=null}
+function bar(a){const p=a==null?0:Math.round(a*100);return`<span class="pbar"><i style="width:${p}%;background:${a==null?"var(--line)":a>=.8?"var(--good)":a>=.6?"var(--amber)":"var(--bad)"}"></i></span>`}
+function progressHtml(){
+  const rows=Object.keys(TOPIC).map(k=>{const s=MY.topics[k],a=acc(s);return`<tr><td>${TOPIC[k]}</td><td>${bar(a)}</td><td class="num">${s?`${s.c}/${s.a}`:"–"}</td></tr>`}).join("");
+  const rk=rankTopics(MY),weak=rk.filter(x=>acc(x.s)<.75).slice(0,2),last=MY.recent.slice(-20),trend=last.length>=10?Math.round(100*last.filter(r=>r.ok).length/last.length):null;
+  const tip=MY.a<5?"Answer a few questions and your strong and weak topics will show here.":weak.length?`Focus next on <b>${weak.map(x=>TOPIC[x.k]).join("</b> and <b>")}</b>. Questions on ${weak.length>1?"these come":"this comes"} up more often until your score improves.`:"No weak spots so far. Try the next difficulty level.";
+  const miss=T.miss.slice(-4).reverse().map(m=>`<li><span class="mq">${m.p}</span><span class="ma">You chose <b>${esc(m.chose)}</b>; answer <b>${esc(m.right)}</b>.</span></li>`).join("");
+  return`<h3>Your progress</h3><p class="note" style="margin:2px 0 8px">${MY.a} answered · ${MY.a?Math.round(100*MY.c/MY.a):0}% correct${trend!=null?` · last 20: ${trend}%`:""}</p>
+  <table class="ptab"><tbody>${rows}</tbody></table><p class="ptip">${tip}</p>
+  ${miss?`<h3>Recent mistakes</h3><ul class="miss">${miss}</ul>`:""}
+  <h3>Compare</h3><div id="cmp">${compareHtml()}</div>${SCOREERR?`<p class="warn">${esc(SCOREERR)}</p>`:""}`}
+function compareHtml(){
+  if(!SCOREDB)return`<p class="note">Comparing scores needs the shared page; your results are kept on this device.</p>`;
+  const list=SCORES.filter(x=>x.a>0).sort((a,b)=>b.a-a.a);if(!list.length)return`<p class="note">No one has answered yet.</p>`;
+  return`<table class="ctab"><thead><tr><th>Who</th><th class="num">Answered</th><th class="num">Correct</th><th class="num">Best streak<br><small>E · M · H</small></th><th>Strongest</th><th>Needs work</th></tr></thead><tbody>${list.map(x=>{const rk=rankTopics(x),hi=rk.length?rk[rk.length-1]:null,lo=rk.length&&acc(rk[0].s)<.75?rk[0]:null;
+    return`<tr${x.id===MYID?' class="me"':""}><td data-uid="${esc(x.id)}">${x.id===MYID?"You":"…"}</td><td class="num">${x.a}</td><td class="num">${Math.round(100*x.c/x.a)}%</td><td class="num">${x.best.easy||0} · ${x.best.medium||0} · ${x.best.hard||0}</td><td>${hi?TOPIC[hi.k]:"–"}</td><td>${lo?TOPIC[lo.k]:"–"}</td></tr>`}).join("")}</tbody></table>
+  <p class="note">Everyone this page is shared with can see this table. Topics show once someone has answered three questions in them.</p>`}
+async function nameCells(){if(!USER)return;const cells=[...document.querySelectorAll("#cmp td[data-uid]")].filter(c=>c.dataset.uid!==MYID);if(!cells.length)return;
+  const ps=await USER.profiles(cells.map(c=>c.dataset.uid));cells.forEach(c=>{const p=ps[c.dataset.uid];c.textContent=(p&&p.name)||"Someone"})}
+function drawProgress(){const el=$("#tprog");if(!el)return;el.innerHTML=progressHtml();nameCells()}
+function trainView(){
+  if(!T.q)nextQ();const q=T.q;
+  const sel=(id,v)=>`<select id="${id}">${DATA.brands.map(b=>`<option value="${b.id}" ${b.id===v?"selected":""}>${esc(b.short)}</option>`).join("")}</select>`;
+  const lv=`<div class="seg tlv" role="group" aria-label="Difficulty">${Object.entries(LEVELS).map(([k,v])=>`<button data-tl="${k}" aria-pressed="${k===T.level}">${v.name}</button>`).join("")}</div>`;
+  const done=T.picked!=null;
+  const body=q?`<div class="tq"><p class="tkind">${TOPIC[q.topic]}</p><p class="tprompt">${q.p}</p><div class="topts">${q.o.map((o,i)=>`<button class="topt${done?(o.ok?" right":i===T.picked?" wrong":""):""}" data-i="${i}" ${done?"disabled":""}>${esc(o.t)}${o.sub?`<small>${esc(o.sub)}</small>`:""}</button>`).join("")}</div>
+    ${done?`<div class="tfb"><p><b>${q.o[T.picked].ok?"Correct.":"Not quite."}</b> ${q.x}</p><div class="tact">${q.fam&&MID[q.fam]!=null?`<button class="chip" data-tw="${q.fam}">See ${esc(famShort(q.fam))} on the wheel</button>`:""}${q.grid&&q.fam?`<button class="chip" data-tg="${q.fam}">See in chip grid</button>`:""}<button class="chip" id="tNext" aria-pressed="true">Next question</button></div></div>`:""}</div>`:'<p class="note">No question could be made at this level for this brand. Try another brand or level.</p>';
+  return`<div class="train tgrid"><div class="tmain"><h2>NVQ Level 2 colour practice</h2>
+  <div class="tbar">${lv}<label class="tctl">My salon's brand ${sel("tBrand",T.brand)}</label><span class="tscore"><b>${T.streak}</b> streak · ${T.score}/${T.asked} this session · best ${MY.best[T.level]||0}</span></div>
+  <section class="panel">${body}</section>
+  <p class="note">Questions marked with a source come from the ${WSRC} (2026); others are general knowledge of the Level 2 colour unit and have not been checked against Sylvie's course specification.</p></div>
+  <aside class="panel tside" id="tprog">${progressHtml()}</aside></div>`;
+}
+function bindTrain(){
+  nameCells();
+  document.querySelectorAll("[data-tl]").forEach(x=>x.onclick=()=>{T.level=x.dataset.tl;T.q=null;T.streak=0;store.set("train-level",T.level);render()});
+  const e=$("#tBrand");if(e)e.onchange=()=>{T.brand=e.value;T.q=null;render()};
+  document.querySelectorAll(".topt").forEach(x=>x.onclick=()=>{if(T.picked!=null)return;T.picked=+x.dataset.i;T.asked++;const ok=T.q.o[T.picked].ok;
+    if(ok){T.score++;T.streak++}else{T.streak=0;const r=T.q.o.find(o=>o.ok);T.miss.push({p:T.q.p.replace(/<span class="tsw"[^>]*><\/span>/,""),chose:T.q.o[T.picked].t,right:r?r.t:""});if(T.miss.length>12)T.miss.shift()}
+    record(T.q,ok);render()});
+  const n=$("#tNext");if(n){n.onclick=()=>{nextQ();render()};n.focus()}
+  document.querySelectorAll("[data-tw]").forEach(x=>x.onclick=()=>{S.wmode="tones";S.fam=x.dataset.tw;S.focus=null;S.rot=targetRot(S.fam,S.rot);S.view="wheel";render()});
+  document.querySelectorAll("[data-tg]").forEach(x=>x.onclick=()=>{S.gridFam=x.dataset.tg;S.view="grid";render()});
+}
+
+/* ---------- detail sheet ---------- */
+function openSheet(bid,lid,code){
+  const b=DATA.brands.find(x=>x.id===bid),l=b.lines.find(x=>x.id===lid),s=l.shades.find(x=>x.code===code);
+  const tones=s.tones.map((t,i)=>{const tk=b.tone_key.tones[t],f=s.fams[i]||s.fams[0];return`<div>${i?"Secondary":"Primary"}: <span class="fam"><i style="background:${FAMCOL[f]}"></i><b>${esc(tk?tk.label:t)}</b></span> <span class="note">(${esc(FAM[f].name)})</span></div>`}).join("")||`<div>${esc(FAM[s.fams[0]].name)}</div>`;
+  const sibs=[];DATA.brands.forEach(o=>{if(o.id===b.id)return;o.lines.forEach(ol=>ol.shades.forEach(x=>{if(x.depth===s.depth&&x.fams[0]===s.fams[0]&&(x.fams[1]||null)===(s.fams[1]||null))sibs.push({...x,brand:o,line:ol})}))});
+  const sh=$("#sheet");sh.hidden=false;
+  sh.innerHTML=`<button class="close" id="closeSheet" aria-label="Close">×</button><div class="wrap"><div><div class="bigsw" style="background:${s.hex}"></div><p class="note" style="margin:6px 0 0">Printed swatch, illustrative</p></div>
+  <div style="min-width:0"><p class="lbl" style="margin:0">${esc(b.short)} · ${esc(l.name)}</p><h2 class="code" style="font-weight:500;margin:2px 0 8px">${esc(s.code)}</h2>
+  <div>Level <b>${LV_LABEL(s.depth)}</b>${b.depth_names[s.depth]?` (${esc(b.depth_names[s.depth])})`:""}${s.intense?" · doubled level = intense":""}</div>${tones}${s.note?`<p class="note">${esc(s.note)}</p>`:""}
+  <p class="note" style="margin-top:8px">${esc(l.type)} · ${esc(l.ratio)} · ${esc(l.time)}</p>${l.warnings.filter(w=>/alone|R5/.test(w)).map(w=>`<p class="warn">${esc(w)}</p>`).join("")}
+  ${saveBlock(b,l,s)}${b.id==="wella"?`<div class="tact" style="margin-top:8px"><button class="chip" data-wgo="mix">Wella mixing &amp; developers</button><button class="chip" data-wgo="corr">Corrective recipes</button></div>`:""}
+  <h3 style="margin-top:12px">Same level and tone family in other brands</h3><p class="note">Matched on code structure only (level number plus tone families). A starting point for a consultation, not a colour match: levels are not yet calibrated between brands.</p>
+  <div class="sibs">${sibs.length?sibs.slice(0,40).map(chip).join(""):'<span class="note">No other brand has this level and tone combination.</span>'}</div></div></div>`;
+  bindSaveBlock(b,l,s);
+  $("#closeSheet").onclick=()=>{sh.hidden=true};
+  sh.querySelectorAll("[data-wgo]").forEach(x=>x.onclick=()=>{sh.hidden=true;S.view="brands";S.brand="wella";S.btab=x.dataset.wgo;render();$("#main").scrollTop=0});
+  sh.querySelectorAll(".sw").forEach(x=>x.onclick=()=>openSheet(x.dataset.b,x.dataset.l,x.dataset.code));
+}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#sheet").hidden=true});
+function activeProf(){return S.collect?profs().find(p=>p.id===S.collect)||null:null}
+function inProf(pf,b,l,c){return pf.items.some(it=>it.b===b&&it.l===l&&it.code===c)}
+function saveCollect(){store.set("collect",S.collect)}
+function renderCollect(){const sel=$("#collectSel");if(!sel)return;const P=profs();
+  sel.innerHTML=`<option value="">off</option>`+P.map(p=>`<option value="${p.id}">${esc(p.name)} (${p.items.length})</option>`).join("")+`<option value="__new">New profile…</option>`;
+  if(S.collect&&!P.some(p=>p.id===S.collect))S.collect=null;sel.value=S.collect||"";$("#collectBox").classList.toggle("on",!!S.collect);
+  sel.onchange=()=>{if(sel.value==="__new"){S.collect=null;S.view="saved";render();setTimeout(()=>{const i=$("#newProfName");if(i)i.focus()},50);return}S.collect=sel.value||null;saveCollect();render()}}
+function toast(msg){let t=$("#toast");if(!t){t=document.createElement("div");t.id="toast";t.className="toast";$("#app").appendChild(t)}t.textContent=msg;t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,1800)}
+document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest(".addb");if(!a)return;e.preventDefault();e.stopPropagation();
+  const pf=activeProf();if(!pf)return;const it={b:a.dataset.b,l:a.dataset.l,code:a.dataset.code};
+  const had=inProf(pf,it.b,it.l,it.code);if(had)pf.items=pf.items.filter(x=>!(x.b===it.b&&x.l===it.l&&x.code===it.code));else pf.items=[...pf.items,it];writeProf(pf);
+  document.querySelectorAll(`.addb[data-b="${it.b}"][data-l="${it.l}"][data-code="${CSS.escape(it.code)}"]`).forEach(x=>{x.classList.toggle("on",!had);x.classList.remove("bump");void x.offsetWidth;x.classList.add("bump");x.textContent=had?"+":"✓";x.setAttribute("aria-label",(had?"Add ":"Remove ")+it.code+(had?" to ":" from ")+pf.name)});
+  renderCollect();toast(`${had?"Removed":"Added"} ${it.code} ${had?"from":"to"} ${pf.name}`)},true);
+
+function bindSide(){
+  document.querySelectorAll("#side [data-fam]").forEach(x=>x.onclick=()=>setFam(x.dataset.fam));
+  document.querySelectorAll("#side td.cl").forEach(x=>x.onclick=()=>setFam(x.dataset.cf,{b:x.dataset.cb,k:x.dataset.ck},true));
+  document.querySelectorAll("#side [data-unw]").forEach(x=>x.onclick=()=>setNeut(x.dataset.unw));
+  document.querySelectorAll("#side [data-lv]").forEach(x=>{const go=()=>pickLevel(+x.dataset.lv);x.onclick=go;x.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}}});
+  document.querySelectorAll("#side [data-side]").forEach(x=>x.onclick=()=>{S.side=x.dataset.side;$("#side").innerHTML=sideHtml();bindSide()});
+  document.querySelectorAll("#side [data-gofam]").forEach(x=>x.onclick=e=>{e.preventDefault();S.gridFam=x.dataset.gofam;S.view="grid";render();$("#main").scrollTop=0});
+}
+function bind(){
+  if(S.view==="translate")bindTranslate();
+  if(S.view==="train")bindTrain();
+  if(S.view==="saved")bindSaved();
+  document.querySelectorAll("#rot .sector,#rot .seclab").forEach(x=>x.addEventListener("click",()=>segTap(x.dataset.fam)));
+  document.querySelectorAll("#rot .dot").forEach(x=>x.addEventListener("click",()=>{if(isNeut()){S.focus={b:x.dataset.b,k:x.dataset.k};document.querySelectorAll("#rot .dot").forEach(d=>d.classList.toggle("sel",d===x));refreshSide()}else setFam(x.dataset.fam,{b:x.dataset.b,k:x.dataset.k})}));
+  if($("#side"))bindSide();
+  if($("#key"))kBindH();
+  document.querySelectorAll("[data-wm]").forEach(x=>x.onclick=()=>setWMode(x.dataset.wm));
+  if($("#lvstrip"))bindStrip();
+  document.querySelectorAll("[data-ws]").forEach(x=>x.onclick=()=>{if(S.wstyle===x.dataset.ws)return;S.wstyle=x.dataset.ws;render()});
+  document.querySelectorAll("[data-gfam]").forEach(x=>x.onclick=()=>{S.gridFam=x.dataset.gfam;render()});
+  document.querySelectorAll("#main .sw").forEach(x=>x.onclick=()=>openSheet(x.dataset.b,x.dataset.l,x.dataset.code));
+  document.querySelectorAll("[data-brand]").forEach(x=>x.onclick=e=>{e.preventDefault();S.brand=x.dataset.brand;render();$("#main").scrollTop=0});
+  document.querySelectorAll("[data-btab]").forEach(x=>x.onclick=()=>{S.btab=x.dataset.btab;render();$("#main").scrollTop=0});
+}
+addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(["wheel","grid","depth","brands"].includes(h)){S.view=h;render()}else if(h.startsWith("b-")){S.view="brands";S.brand=h.slice(2);render()}});
+let rt;addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(()=>{applyFrame();if(S.view==="wheel")layoutWheel();else if(S.view==="grid")render()},150)});
+</script>
+
+</body>
+</html>
